@@ -12,9 +12,3 @@ object RequestProcessor {
 
   def process(event: Event) = executor.execute(new EventExecutor(event, clusterStore))
 }
-
-class EventExecutor(event: Event, store: ClusterStore) extends Runnable {
-  override def run(): Unit = {
-    println(s"I'm executing $event")
-  }
-}
