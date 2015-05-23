@@ -12,6 +12,7 @@ class VamanaController extends Controller {
   val config = VamanaConfigReader.load
 
   post("/cluster/create") { request =>
+    val clusterSpec = JsonUtils.fromJsonAsMap(request.contentString)
     Future(render.json(s"cluster created as ${Random.nextInt()}"))
   }
 
