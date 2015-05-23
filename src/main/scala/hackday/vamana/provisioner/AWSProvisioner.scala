@@ -7,15 +7,19 @@ import org.jclouds.ContextBuilder
 import org.jclouds.aws.ec2.AWSEC2ProviderMetadata
 import org.jclouds.compute.options.TemplateOptions
 import org.jclouds.compute.{domain, ComputeServiceContext, ComputeService}
-import org.jclouds.compute.domain.{Template, TemplateBuilderSpec, NodeMetadata}
+import org.jclouds.compute.domain._
 
 import scala.collection.JavaConverters._
 import org.jclouds.logging.LoggingModules
 import org.jclouds.sshj.config.SshjSshClientModule
+import org.jclouds.ec2.compute.{EC2ComputeServiceContext, EC2ComputeService}
+import hackday.vamana.models.ClusterContext
+import scala.Some
 
 
 case class AWSProvisioner(computeService: ComputeService) {
   def addNodes(hwConfig: HardwareConfig, clusterName: String, numInstances: Int, template: Template) = {
+    val ec2ComputeSvcContext = computeService.getContext.unwrapApi(classOf[EC2ComputeServiceContext])
     computeService.createNodesInGroup(clusterName, numInstances, template).asScala
   }
 

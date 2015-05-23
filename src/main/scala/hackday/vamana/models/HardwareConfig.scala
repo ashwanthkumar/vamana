@@ -6,6 +6,7 @@ trait HardwareConfig {
   def provider: String
   def credentials: Credentials
   def instanceType: String
+  def imageId: String
 }
 
 object HardwareConfig {
@@ -15,7 +16,6 @@ object HardwareConfig {
         val config = AWSHardwareConfig(
           accessKeyId = spec("accessId"),
           secretKeyId = spec("secretKey"),
-          ami = spec.getOrElse("ami", "foo-bar-ami"),
           instanceType = spec.getOrElse("instanceType", "t1.micro")
         )
 
