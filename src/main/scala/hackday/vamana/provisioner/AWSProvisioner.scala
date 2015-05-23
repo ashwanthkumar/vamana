@@ -36,8 +36,8 @@ trait Provisioner {
 }
 
 trait PrivateKey {
-  val privateKeyFile = Option(System.getenv("PRIVATE_KEY_FILE")) getOrElse "/Users/sriram/indix.pem"
-  val privateKey = io.Source.fromFile(privateKeyFile).getLines().mkString("\n")
+  val privateKeyFile = Option(System.getenv("PRIVATE_KEY_FILE"))
+  val privateKey = privateKeyFile.map(pkFile => io.Source.fromFile(pkFile).getLines().mkString("\n"))
 }
 
 object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey {
@@ -82,11 +82,15 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
     // This would help querying if need be.
     val tags = List(cluster.name)
     val options = TemplateOptions.Builder
-      .installPrivateKey(privateKey)
       .tags(tags.asJava)
 
-    val masterOptions = options.clone().tags(("master" :: tags).asJava)
-    val slaveOptions = options.clone().tags(("slave" :: tags).asJava)
+    val optionsWithPrivateKey = privateKey match {
+      case Some(key) => options.installPrivateKey(key)
+      case _ => options
+    }
+
+    val masterOptions = optionsWithPrivateKey.clone().tags(("master" :: tags).asJava)
+    val slaveOptions = optionsWithPrivateKey.clone().tags(("slave" :: tags).asJava)
 
     val provisioner = provisionerFor(cluster)
     val master = provisioner
