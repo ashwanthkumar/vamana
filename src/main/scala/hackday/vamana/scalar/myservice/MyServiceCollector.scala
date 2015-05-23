@@ -20,7 +20,7 @@ case class MyServiceSupply(available: Int) extends Supply
 class MyServiceCollector(cluster: RunningCluster) extends Collector with VamanaLogger {
   val perNodeSupply = 100
   def stats(node: NodeMetadata) = {
-    val url = s"http://${node.getPublicAddresses}/status"
+    val url = s"http://${node.getPublicAddresses}:8080/status"
     val response = Unirest.get(url).asString()
     val appMetric = JsonUtils.fromJsonAsMap(response.getBody)
     MyServiceDemand(appMetric("requests").toInt)
