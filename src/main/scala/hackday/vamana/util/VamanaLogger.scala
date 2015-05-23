@@ -1,8 +1,7 @@
 package hackday.vamana.util
 
-import org.apache.log4j.Logger
+import org.slf4j.{LoggerFactory, Logger}
 
-
-trait VamanaLogger { me => 
-  val LOG = Logger.getLogger(me.getClass.getCanonicalName)
+trait VamanaLogger { me =>
+  val LOG = LoggerFactory.getLogger(getClass)
 }

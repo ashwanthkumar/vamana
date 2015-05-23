@@ -7,7 +7,7 @@ object ClusterSpecValidator {
     // optional fields
     // ami, instanceType, spotPrice, app,
 
-    val MUST_CONTAIN_KEYS = List("name", "cloud", "accessId", "secretKey", "minNodes", "maxNodes")
+    val MUST_CONTAIN_KEYS = List("name", "cloud", "accessId", "secretKey", "minNodes", "maxNodes", "app")
     MUST_CONTAIN_KEYS.forall(spec.contains)
   }
 }
