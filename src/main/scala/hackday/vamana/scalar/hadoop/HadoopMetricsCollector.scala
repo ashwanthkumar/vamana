@@ -17,27 +17,19 @@ case class HadoopAppSupply(mapCapacity: Int, reduceCapacity: Int) extends Supply
 
 class HadoopMetricsCollector(cluster: RunningCluster) extends Collector with Clock with VamanaLogger {
   def pendingOrRunning(t: TaskReport) = t.getCurrentStatus == TIPStatus.PENDING || t.getCurrentStatus == TIPStatus.RUNNING
+
   override def getStats: ResourceStat = {
     cluster.master.fold(ResourceStat(HadoopAppDemand(0,0,0), HadoopAppSupply(0,0), NOW)){ master =>
-      val conf = new Configuration
-      conf.set("mapred.job.tracker", s"$master:8021")
-      val client = new JobClient(conf)
-      val status = client.getClusterStatus(true)
-      println("active TTs = " + status.getTaskTrackers)
-      println("blacklisted TTs = " + status.getBlacklistedTrackers)
-      println("active map tasks = " + status.getMapTasks)
-      println("total map tasks = " + status.getMaxMapTasks)
-      println("active reduce tasks = " + status.getReduceTasks)
-      println("total reduce tasks = " + status.getMaxReduceTasks)
-      val activeJobs = client.jobsToComplete()
+      val client = new HadoopJobTrackerClient(master)
+      val activeJobs = client.runningJobs
       val demand = activeJobs.map { status =>
         val id = status.getJobID
-        val mappersDemand = client.getMapTaskReports(id).count(pendingOrRunning)
-        val reducersDemand = client.getReduceTaskReports(id).count(pendingOrRunning)
+        val mappersDemand = client.mappersInUse(id)
+        val reducersDemand = client.reducersInUse(id)
         HadoopAppDemand(1, mappersDemand, reducersDemand)
       }.reduce(_+_)
       val numSlaves = cluster.context.fold(0)(_.slaves.size)
-      val supply = HadoopAppSupply(status.getMaxMapTasks * numSlaves, status.getMaxReduceTasks * numSlaves)
+      val supply = HadoopAppSupply(client.maxMapTasks * numSlaves, client.maxReduceTasks * numSlaves)
       ResourceStat(demand, supply, NOW)
     }
   }
