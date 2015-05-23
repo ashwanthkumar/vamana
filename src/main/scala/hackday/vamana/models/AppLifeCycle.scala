@@ -51,3 +51,24 @@ case class HadoopLifeCycle(clusterContext: ClusterContext, props: Map[String, St
     Decommission(List("cmd1"))
   }
 }
+
+case class MyServiceLifeCycle(clusterContext: ClusterContext) extends AppLifeCycle {
+  val mySvcFullPath = ""
+  val remoteMySVCFullPath = "/home/ec2-user/"
+  override def bootstrap() = {
+    val copyActions = List(
+      Copy(mySvcFullPath, remoteMySVCFullPath)
+    )
+    val cmd = List(
+      "python /home/ec2-user/MyService.py &"
+    )
+
+    Bootstrap(copyActions, cmd)
+  }
+
+  override def decommission(): Unit = {
+    Decommission(
+      List("ps -aef | grep MyService.py | grep -v | awk '{print $2}' | xargs kill -9")
+    )
+  }
+}

@@ -3,6 +3,8 @@ package hackday.vamana.models
 import hackday.vamana.provisioner.ProviderConstants
 import org.jclouds.compute.domain.NodeMetadata
 import scala.collection.JavaConverters._
+import hackday.vamana.scalar.myservice.{MyServiceCollector, MyServiceScalar}
+import hackday.vamana.scalar.hadoop.{HadoopScalar, HadoopMetricsCollector}
 
 case class ClusterContext(master: NodeMetadata, slaves: Set[NodeMetadata]) {
   def allNodeIds = all.map(_.getId)
@@ -10,7 +12,19 @@ case class ClusterContext(master: NodeMetadata, slaves: Set[NodeMetadata]) {
 }
 
 case class HadoopTemplate(props: Map[String, String], minNodes: Int, maxNodes: Int) extends AppTemplate {
-  override def context(clusterCtx: ClusterContext): AppContext = AppContext(null, null, HadoopLifeCycle(clusterCtx, props))
+  override def context(cluster: RunningCluster): AppContext = AppContext(
+    new HadoopMetricsCollector(cluster),
+    new HadoopScalar(cluster),
+    HadoopLifeCycle(cluster.context.get, props)
+  )
+}
+
+case class MyServiceTemplate(props: Map[String, String], minNodes: Int, maxNodes: Int) extends AppTemplate {
+  override def context(cluster: RunningCluster): AppContext = AppContext(
+    new MyServiceCollector(cluster),
+    new MyServiceScalar(cluster),
+    MyServiceLifeCycle(cluster.context.get)
+  )
 }
 
 case class AWSHardwareConfig(accessKeyId: String, secretKeyId: String,

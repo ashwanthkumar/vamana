@@ -11,6 +11,12 @@ object AppTemplate {
           minNodes = spec("minNodes").toInt,
           maxNodes = spec("maxNodes").toInt
         )
+      case "myservice" =>
+        MyServiceTemplate(
+          props = spec,
+          minNodes = spec("minNodes").toInt,
+          maxNodes = spec("maxNodes").toInt
+        )
       case app => throw new RuntimeException(s"We still don't know an application for $app")
     }
   }
@@ -23,5 +29,5 @@ trait AppTemplate {
 
   def minNodes: Int
 
-  def context(clusterCtx: ClusterContext): AppContext
+  def context(cluster: RunningCluster): AppContext
 }
