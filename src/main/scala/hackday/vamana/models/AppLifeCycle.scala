@@ -11,10 +11,10 @@ trait AppLifeCycle {
 }
 
 // FIXME: Replace with appropriate commands & config file paths
-case object HadoopLifeCycle extends AppLifeCycle {
-  val HDFS_SITE_XML = ""
-  val MAPRED_SITE_XML = ""
-  val CORE_SITE_XML = ""
+case class HadoopLifeCycle(clusterContext: ClusterContext) extends AppLifeCycle {
+  val HDFS_SITE_XML = "hdfs-site.xml"
+  val MAPRED_SITE_XML = "mapred-site.xml"
+  val CORE_SITE_XML = "core-site.xml"
   val DECOMMISSION_SCRIPT = ""
 
   val REMOTE_HDFS_SITE_XML = ""

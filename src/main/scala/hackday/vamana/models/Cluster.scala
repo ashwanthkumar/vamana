@@ -2,7 +2,7 @@ package hackday.vamana.models
 
 import hackday.vamana.provisioner.ProviderConstants
 import org.jclouds.compute.domain.NodeMetadata
-
+import scala.collection.JavaConverters._
 
 case class ClusterContext(master: NodeMetadata, slaves: Set[NodeMetadata]) {
   def allNodeIds = all.map(_.getId)
@@ -10,7 +10,7 @@ case class ClusterContext(master: NodeMetadata, slaves: Set[NodeMetadata]) {
 }
 
 case class HadoopTemplate(props: Map[String, String], minNodes: Int, maxNodes: Int) extends AppTemplate {
-  override def context(clusterCtx: ClusterContext): AppContext = AppContext(null, null, HadoopLifeCycle)
+  override def context(clusterCtx: ClusterContext): AppContext = AppContext(null, null, HadoopLifeCycle(clusterCtx))
 }
 
 case class AWSHardwareConfig(accessKeyId: String, secretKeyId: String,
@@ -27,4 +27,6 @@ case class AWSHardwareConfig(accessKeyId: String, secretKeyId: String,
   override def credentials: Credentials = Credentials(accessKeyId, secretKeyId)
 }
 
-case class RunningCluster(id: Long, spec: ClusterSpec, status: ClusterStatus, context: Option[ClusterContext] = None)
+case class RunningCluster(id: Long, spec: ClusterSpec, status: ClusterStatus, context: Option[ClusterContext] = None) {
+  def master = context.map(_.master).map(_.getPublicAddresses.asScala.filter(_ != "localhost").head)
+}
