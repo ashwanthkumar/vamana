@@ -9,7 +9,7 @@ case class HadoopConfig(slaves: List[String], master: String, props: Map[String,
 
 case class AWSHardwareConfig(accessKeyId: String, secretKeyId: String,
                              ami: String, instanceType: String,
-                             spotPrice: Option[Double] = None, securityGroup: String) extends HardwareConfig
+                             securityGroup: String, spotPrice: Option[Double] = None) extends HardwareConfig
 
 case class ClusterTemplate(appConfig: AppConfig, hwConfig: HardwareConfig)
 
