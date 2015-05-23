@@ -10,6 +10,8 @@ import org.jclouds.compute.{ComputeServiceContext, ComputeService}
 import org.jclouds.compute.domain.NodeMetadata
 
 import scala.collection.JavaConverters._
+import org.jclouds.logging.LoggingModules
+import org.jclouds.sshj.config.SshjSshClientModule
 
 
 case class AWSProvisioner(computeService: ComputeService) {
@@ -37,7 +39,8 @@ trait Provisioner {
 }
 
 trait PrivateKey {
-  val privateKey = Option(System.getenv("PRIVATE_KEY_FILE")) getOrElse "/Users/sriram/indix.pem"
+  val privateKeyFile = Option(System.getenv("PRIVATE_KEY_FILE")) getOrElse "/Users/sriram/indix.pem"
+  val privateKey = io.Source.fromFile(privateKeyFile).getLines().mkString("\n")
 }
 
 object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey {
@@ -50,6 +53,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
         val computeService = ContextBuilder
           .newBuilder(AWSEC2ProviderMetadata.builder().build())
           .credentials(creds.identity, creds.credential)
+          .modules(Iterable(LoggingModules.firstOrJDKLoggingModule(),new SshjSshClientModule()).asJava)
           .buildView(classOf[ComputeServiceContext])
           .getComputeService
         AWSProvisioner(computeService)
