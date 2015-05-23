@@ -10,7 +10,7 @@ object AWSProvisionerDriver {
     val (accessKey, secretKey) = (System.getenv("EC2_ACCESS_KEY"), System.getenv("EC2_SECRET_KEY"))
     val hadoopCluster = Cluster(123l, "vamana-hadoop-test", ClusterTemplate(
       HadoopTemplate(Map[String,String](), 2, 3),
-      AWSHardwareConfig(accessKey, secretKey, "", "m3.xlarge")
+      AWSHardwareConfig(accessKey, secretKey, "m3.xlarge")
     ), NotRunning)
     val clusterContext = ClusterProvisioner.create(hadoopCluster)
   }
