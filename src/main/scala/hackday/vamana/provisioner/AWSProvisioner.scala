@@ -32,6 +32,8 @@ case class AWSProvisioner(computeService: ComputeService) {
 
 trait Provisioner {
   def create(cluster: Cluster) : ClusterContext
+  def upScale(cluster: Cluster, clusterCtx: ClusterContext, factor: Int) : ClusterContext
+  def downScale(cluster: Cluster, clusterCtx: ClusterContext, factor: Int) : ClusterContext
   def tearDown(cluster: Cluster, clusterCtx: ClusterContext)
 }
 
@@ -41,7 +43,7 @@ trait PrivateKey {
 }
 
 object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey {
-  
+
   def provisionerFor(cluster: Cluster) = {
     cluster.template.hwConfig.provider match {
       case ProviderConstants.EC2 => {
@@ -80,17 +82,15 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
     // All nodes that belong to a particular
     // cluster would have the cluster name as tag.
     // This would help querying if need be.
-    val tags = List(cluster.name)
-    val options = TemplateOptions.Builder
-      .tags(tags.asJava)
+    val options = new TemplateOptions()
 
     val optionsWithPrivateKey = privateKey match {
       case Some(key) => options.installPrivateKey(key)
       case _ => options
     }
 
-    val masterOptions = optionsWithPrivateKey.clone().tags(("master" :: tags).asJava)
-    val slaveOptions = optionsWithPrivateKey.clone().tags(("slave" :: tags).asJava)
+    val masterOptions = optionsWithPrivateKey.clone().tags(List("master", cluster.name).asJava)
+    val slaveOptions = optionsWithPrivateKey.clone().tags(List("slave", cluster.name).asJava)
 
     val provisioner = provisionerFor(cluster)
     val master = provisioner
@@ -114,12 +114,37 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
 
   override def tearDown(cluster: Cluster, clusterCtx: ClusterContext): Unit = {
     LOG.info(s"Tearing down ${cluster.name}")
-
     val provisioner = provisionerFor(cluster)
     val nodeIds = clusterCtx.master.getId :: clusterCtx.slaves.toList.map(_.getId)
     val nodeStatus = provisioner.removeNodes(nodeIds)
     println("Cluster termination completed...")
     println(nodeStatus.map(n => s"${n.getHostname} : ${n.getStatus}").mkString("\n"))
     nodeStatus
+  }
+
+  override def upScale(cluster: Cluster, clusterCtx: ClusterContext, factor: Int): ClusterContext = {
+    val hwConfig = cluster.template.hwConfig
+    val tags = List(cluster.name)
+    val options = TemplateOptions.Builder
+      .tags(tags.asJava)
+
+    val optionsWithPrivateKey = privateKey match {
+      case Some(key) => options.installPrivateKey(key)
+      case _ => options
+    }
+    val slaveOptions = optionsWithPrivateKey.clone().tags(("slave" :: tags).asJava)
+    val provisioner = provisionerFor(cluster)
+    val newSlaves = provisioner
+      .addNodes(hwConfig,
+        cluster.name,
+        factor,
+        templateFrom(provisioner.computeService)(hwConfig, Some(slaveOptions)))
+    clusterCtx.copy(slaves = clusterCtx.slaves ++ newSlaves.toSet)
+  }
+
+  override def downScale(cluster: Cluster, clusterCtx: ClusterContext, factor: Int): ClusterContext = {
+    val provisioner = provisionerFor(cluster)
+    val removedSlaves = provisioner.removeNodes(clusterCtx.slaves.take(factor).map(_.getId).toList)
+    clusterCtx.copy(slaves = clusterCtx.slaves diff removedSlaves.toSet)
   }
 }
