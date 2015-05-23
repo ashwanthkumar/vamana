@@ -22,15 +22,4 @@ case class AWSHardwareConfig(accessKeyId: String, secretKeyId: String,
   override def credentials: Credentials = Credentials(accessKeyId, secretKeyId)
 }
 
-case class Cluster(id: Long, name: String, template: ClusterTemplate, status: ClusterStatus)
-
-object Cluster {
-  def fromSpec(spec: Map[String, String]) = {
-    Cluster(
-      id = spec("id").toLong,
-      name = spec("name"),
-      template = ClusterTemplate.fromSpec(spec),
-      status = NotRunning
-    )
-  }
-}
+case class RunningCluster(id: Long, clusterSpec: ClusterSpec, status: ClusterStatus, context: Option[ClusterContext] = None)

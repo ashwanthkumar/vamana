@@ -1,20 +1,17 @@
 package hackday.vamana.provisioner
 
 import com.google.common.base.Predicate
-import hackday.vamana.models.{ClusterContext, Cluster, HardwareConfig}
+import hackday.vamana.models._
 import hackday.vamana.util.VamanaLogger
 import org.jclouds.ContextBuilder
 import org.jclouds.aws.ec2.AWSEC2ProviderMetadata
-import org.jclouds.compute.options.TemplateOptions
-import org.jclouds.compute.{domain, ComputeServiceContext, ComputeService}
 import org.jclouds.compute.domain._
-
-import scala.collection.JavaConverters._
+import org.jclouds.compute.options.TemplateOptions
+import org.jclouds.compute.{ComputeService, ComputeServiceContext}
 import org.jclouds.logging.LoggingModules
 import org.jclouds.sshj.config.SshjSshClientModule
-import org.jclouds.ec2.compute.{EC2ComputeServiceContext, EC2ComputeService}
-import hackday.vamana.models.ClusterContext
-import scala.Some
+
+import scala.collection.JavaConverters._
 
 
 case class AWSProvisioner(computeService: ComputeService) {
@@ -31,10 +28,10 @@ case class AWSProvisioner(computeService: ComputeService) {
 
 
 trait Provisioner {
-  def create(cluster: Cluster) : ClusterContext
-  def upScale(cluster: Cluster, clusterCtx: ClusterContext, factor: Int) : ClusterContext
-  def downScale(cluster: Cluster, clusterCtx: ClusterContext, factor: Int) : ClusterContext
-  def tearDown(cluster: Cluster, clusterCtx: ClusterContext)
+  def create(cluster: ClusterSpec) : ClusterContext
+  def upScale(cluster: ClusterSpec, clusterCtx: ClusterContext, factor: Int) : ClusterContext
+  def downScale(cluster: ClusterSpec, clusterCtx: ClusterContext, factor: Int) : ClusterContext
+  def tearDown(cluster: ClusterSpec, clusterCtx: ClusterContext)
 }
 
 trait PrivateKey {
@@ -44,10 +41,10 @@ trait PrivateKey {
 
 object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey {
 
-  def provisionerFor(cluster: Cluster) = {
-    cluster.template.hwConfig.provider match {
+  def provisionerFor(cluster: ClusterSpec) = {
+    cluster.hwConfig.provider match {
       case ProviderConstants.EC2 => {
-        val hwConfig = cluster.template.hwConfig
+        val hwConfig = cluster.hwConfig
         val creds = hwConfig.credentials
         val computeService = ContextBuilder
           .newBuilder(AWSEC2ProviderMetadata.builder().build())
@@ -77,8 +74,8 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
   * */
 
   // TODO: Override properties with appropriate ami query
-  override def create(cluster: Cluster) = {
-    val hwConfig = cluster.template.hwConfig
+  override def create(cluster: ClusterSpec) = {
+    val hwConfig = cluster.hwConfig
     // All nodes that belong to a particular
     // cluster would have the cluster name as tag.
     // This would help querying if need be.
@@ -104,7 +101,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
     val slaves = provisioner
       .addNodes(hwConfig,
         cluster.name,
-        cluster.template.appTemplate.minNodes,
+        cluster.appTemplate.minNodes,
         templateFrom(provisioner.computeService)(hwConfig, Some(slaveOptions)))
 
     LOG.info(s"Slaves running at => ${slaves.map(_.getHostname).mkString("\n")}")
@@ -112,7 +109,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
     ClusterContext(master, slaves.toSet)
   }
 
-  override def tearDown(cluster: Cluster, clusterCtx: ClusterContext): Unit = {
+  override def tearDown(cluster: ClusterSpec, clusterCtx: ClusterContext): Unit = {
     LOG.info(s"Tearing down ${cluster.name}")
     val provisioner = provisionerFor(cluster)
     val nodeIds = clusterCtx.master.getId :: clusterCtx.slaves.toList.map(_.getId)
@@ -122,8 +119,8 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
     nodeStatus
   }
 
-  override def upScale(cluster: Cluster, clusterCtx: ClusterContext, factor: Int): ClusterContext = {
-    val hwConfig = cluster.template.hwConfig
+  override def upScale(cluster: ClusterSpec, clusterCtx: ClusterContext, factor: Int): ClusterContext = {
+    val hwConfig = cluster.hwConfig
     val tags = List(cluster.name)
     val options = TemplateOptions.Builder
       .tags(tags.asJava)
@@ -142,7 +139,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
     clusterCtx.copy(slaves = clusterCtx.slaves ++ newSlaves.toSet)
   }
 
-  override def downScale(cluster: Cluster, clusterCtx: ClusterContext, factor: Int): ClusterContext = {
+  override def downScale(cluster: ClusterSpec, clusterCtx: ClusterContext, factor: Int): ClusterContext = {
     val provisioner = provisionerFor(cluster)
     val removedSlaves = provisioner.removeNodes(clusterCtx.slaves.take(factor).map(_.getId).toList)
     clusterCtx.copy(slaves = clusterCtx.slaves diff removedSlaves.toSet)

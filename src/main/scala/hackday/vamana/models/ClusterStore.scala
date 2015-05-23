@@ -7,9 +7,9 @@ import scala.collection.mutable
 trait ClusterStore {
   def nextId: Long
 
-  def save(cluster: Cluster)
+  def save(cluster: RunningCluster)
 
-  def get(clusterId: Long): Option[Cluster]
+  def get(clusterId: Long): Option[RunningCluster]
 
   def remove(clusterId: Long)
 }
@@ -22,10 +22,10 @@ object ClusterStore {
 }
 
 
-case class InMemoryClusterStore(store: mutable.Map[Long, Cluster]) extends ClusterStore {
-  private val idService = new AtomicLong()
+case class InMemoryClusterStore(store: mutable.Map[Long, RunningCluster]) extends ClusterStore {
+  private val idService = new AtomicLong(1l)
 
-  override def save(cluster: Cluster): Unit = store.put(cluster.id, cluster)
+  override def save(cluster: RunningCluster): Unit = store.put(cluster.id, cluster)
 
   override def get(clusterId: Long) = store.get(clusterId)
 

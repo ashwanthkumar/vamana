@@ -3,7 +3,7 @@ package org.apache.hadoop.mapred
 import java.io.PrintWriter
 import java.util.Date
 import java.util.concurrent.TimeUnit.{DAYS, MINUTES}
-import java.util.concurrent.{ScheduledFuture, TimeUnit, Executors}
+import java.util.concurrent.{Executors, ScheduledFuture}
 
 import org.apache.commons.lang.time.{DurationFormatUtils, StopWatch}
 import org.apache.hadoop.conf.Configuration

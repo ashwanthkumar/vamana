@@ -1,10 +1,11 @@
 package hackday.vamana.models
 
-case class ClusterTemplate(appTemplate: AppTemplate, hwConfig: HardwareConfig)
+case class ClusterSpec(name: String, appTemplate: AppTemplate, hwConfig: HardwareConfig)
 
-object ClusterTemplate {
+object ClusterSpec {
   def fromSpec(spec: Map[String, String]) = {
-    ClusterTemplate(
+    ClusterSpec(
+      name = spec("name"),
       appTemplate = AppTemplate.fromSpec(spec),
       hwConfig = HardwareConfig.fromSpec(spec)
     )

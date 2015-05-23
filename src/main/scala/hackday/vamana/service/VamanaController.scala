@@ -2,7 +2,7 @@ package hackday.vamana.service
 
 import com.twitter.finatra.Controller
 import com.twitter.util.Future
-import hackday.vamana.models.{ClusterSpecValidator, Events, ClusterStore}
+import hackday.vamana.models.{ClusterSpecValidator, ClusterStore, Events}
 import hackday.vamana.processor.RequestProcessor
 import hackday.vamana.service.config.VamanaConfigReader
 
