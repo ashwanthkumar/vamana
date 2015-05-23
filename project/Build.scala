@@ -25,6 +25,7 @@ object Build extends Build {
   lazy val defaultSettings = super.settings ++ defaultAssemblySettings ++ Seq(
     fork in run := false,
     resolvers += Resolver.sonatypeRepo("snapshots"),
+    resolvers += "Cloudera Resolver" at "https://repository.cloudera.com/cloudera/cloudera-repos/",
     parallelExecution in This := false,
     publishMavenStyle := true,
     crossPaths := true,
