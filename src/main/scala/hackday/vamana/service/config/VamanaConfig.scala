@@ -2,7 +2,7 @@ package hackday.vamana.service.config
 
 import com.typesafe.config.{Config, ConfigFactory}
 
-case class VamanaConfig(clusterStoreType: String)
+case class VamanaConfig(clusterStoreType: String, metricsStoreType: String)
 
 object VamanaConfigReader {
   def load = {
@@ -12,7 +12,8 @@ object VamanaConfigReader {
 
   private def vamanaConfig(config: Config) = {
     VamanaConfig(
-      clusterStoreType = config.getString("cluster-store-impl")
+      clusterStoreType = config.getString("cluster-store-impl"),
+      metricsStoreType = config.getString("metrics-store-impl")
     )
   }
 }

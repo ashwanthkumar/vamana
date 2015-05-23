@@ -9,6 +9,12 @@ trait MetricStore {
 
   def get(clusterId: Long): List[ResourceStat]
 }
+object MetricStore {
+  def apply(storeType: String) = storeType match {
+    case "memory" => InMemoryMetricStore.getInstance
+    case store => throw new RuntimeException(s"Unknown type of MetricStore -  $store")
+  }
+}
 
 case class InMemoryMetricStore(store: mutable.Map[Long, List[ResourceStat]]) extends MetricStore {
   override def put(clusterId: Long, stat: ResourceStat): Unit = {
@@ -17,6 +23,11 @@ case class InMemoryMetricStore(store: mutable.Map[Long, List[ResourceStat]]) ext
   }
 
   override def get(clusterId: Long): List[ResourceStat] = store.getOrElse(clusterId, List())
+}
+object InMemoryMetricStore {
+  private val instance = InMemoryMetricStore(mutable.Map.empty)
+
+  def getInstance = instance
 }
 
 case class ScaleUnit(numberOfNodes: Int)

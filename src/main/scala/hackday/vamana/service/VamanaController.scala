@@ -14,7 +14,7 @@ class VamanaController(config: VamanaConfig, clusterStore: ClusterStore) extends
     val clusterSpec = JsonUtils.fromJsonAsMap(request.contentString)
     require(ClusterSpecValidator.validate(clusterSpec), "given cluster is not valid, please check the documentation on the required fields")
     val nextId = clusterStore.nextId
-    RequestProcessor.process(Events.Create(clusterSpec, nextId))
+    RequestProcessor.processEvent(Events.Create(clusterSpec, nextId))
     Future(respond(Map("id" -> nextId)))
   }
 
@@ -26,33 +26,33 @@ class VamanaController(config: VamanaConfig, clusterStore: ClusterStore) extends
 
   put("/cluster/:id/start") { request =>
     val clusterId = request.routeParams("id").toLong
-    RequestProcessor.process(Events.Start(clusterId))
+    RequestProcessor.processEvent(Events.Start(clusterId))
     Future(respond("Cluster is being started"))
   }
 
   put("/cluster/:id/stop") { request =>
     val clusterId = request.routeParams("id").toLong
-    RequestProcessor.process(Events.Stop(clusterId))
+    RequestProcessor.processEvent(Events.Stop(clusterId))
     Future(respond("Cluster is being terminated"))
   }
 
   delete("/cluster/:id") { request =>
     val clusterId = request.routeParams("id").toLong
-    RequestProcessor.process(Events.Teardown(clusterId))
+    RequestProcessor.processEvent(Events.Teardown(clusterId))
     Future(respond("Cluster is being terminated"))
   }
 
   put("/cluster/:id/upscale") { request =>
     val clusterId = request.routeParams("id").toLong
     val number = request.params("nodes").toInt
-    RequestProcessor.process(Events.Upscale(clusterId, number))
+    RequestProcessor.processEvent(Events.Upscale(clusterId, number))
     Future(respond("Cluster will be upscaled"))
   }
 
   put("/cluster/:id/downscale") { request =>
     val clusterId = request.routeParams("id").toLong
     val number = request.params("nodes").toInt
-    RequestProcessor.process(Events.Downscale(clusterId, number))
+    RequestProcessor.processEvent(Events.Downscale(clusterId, number))
     Future(respond("Cluster will be downscaled"))
   }
 
