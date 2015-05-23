@@ -20,7 +20,7 @@ class HadoopMetricsCollector(cluster: RunningCluster) extends Collector with Clo
 
   override def getStats: ResourceStat = {
     cluster.master.fold(ResourceStat(HadoopAppDemand(0,0,0), HadoopAppSupply(0,0), NOW)){ master =>
-      val client = new HadoopJobTrackerClient(master)
+      val client = HadoopJobTrackerClient(master)
       val activeJobs = client.runningJobs
       val demand = activeJobs.map { status =>
         val id = status.getJobID
