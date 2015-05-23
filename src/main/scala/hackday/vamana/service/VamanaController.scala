@@ -41,16 +41,14 @@ class VamanaController extends Controller {
 
   put("/cluster/:id/upscale") { request =>
     val clusterId = request.routeParams("id").toLong
-    // FIXME - Take a JSON payload instead
-    val number = request.contentString.toInt
+    val number = request.params("nodes").toInt
     RequestProcessor.process(Events.Upscale(clusterId, number))
     Future(render.json(clusterId))
   }
 
   put("/cluster/:id/downscale") { request =>
     val clusterId = request.routeParams("id").toLong
-    // FIXME - Take a JSON payload instead
-    val number = request.contentString.toInt
+    val number = request.params("nodes").toInt
     RequestProcessor.process(Events.Downscale(clusterId, number))
     Future(render.json(clusterId))
   }
