@@ -20,7 +20,9 @@ case class MyServiceSupply(available: Int) extends Supply
 class MyServiceCollector(cluster: RunningCluster) extends Collector with VamanaLogger with Clock {
   val perNodeSupply = 100
   def stats(node: NodeMetadata) = {
-    val url = s"http://${node.getPublicAddresses}:8080/status"
+    val nodeAddr = node.getPublicAddresses.asScala.filter(addr => addr != "localhost" || addr != "127.0.0.1").head
+    val url = s"http://$nodeAddr:8080/status"
+    Unirest.setTimeouts(30*1000, 30*1000)
     val response = Unirest.get(url).asString()
     val appMetric = JsonUtils.fromJsonAsMap(response.getBody)
     MyServiceDemand(appMetric("requests").toInt)

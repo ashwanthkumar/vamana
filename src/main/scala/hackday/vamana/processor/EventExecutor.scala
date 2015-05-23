@@ -9,38 +9,42 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
 
   import hackday.vamana.models.Events._
 
+  def handleCreate(uniqueClusterId: Long, clusterSpec: ClusterSpec) = {
+    val watch = new StopWatch
+    watch.start()
+    LOG.info(s"Starting to create cluster with $clusterSpec")
+    val initializingCluster = RunningCluster(uniqueClusterId, clusterSpec, Booting, None)
+    store.save(initializingCluster)
+
+    try {
+      val clusterContext = ClusterProvisioner.create(clusterSpec)
+      val runningCluster = initializingCluster.copy(context = Some(clusterContext), status = Running)
+      LOG.info(s"Started cluster ${clusterSpec.name}(${runningCluster.id})")
+      LOG.info(s"Master - ${clusterContext.master.getPublicAddresses} / ${clusterContext.master.getPrivateAddresses}")
+      clusterContext.slaves.foreach(slave => LOG.info(s"Started slave - ${slave.getPublicAddresses} / ${slave.getPrivateAddresses}"))
+      store.save(runningCluster)
+      LOG.info(s"Cluster ${clusterSpec.name} has been created in ${DurationFormatUtils.formatDurationHMS(watch.getTime)}")
+
+      val appContext = clusterSpec.appTemplate.context(runningCluster)
+      //          LOG.info(s"Registering collector for ${clusterSpec.name}")
+      //          RequestProcessor.startCollector(runningCluster, appContext.collector)
+
+      val bootstrapAction = appContext.lifeCycle.bootstrap()
+      ClusterProvisioner.bootstrap(clusterSpec, clusterContext, bootstrapAction)
+
+    } catch {
+      case e: Exception =>
+        LOG.error(e.getMessage, e)
+        store.save(initializingCluster.copy(status = Failed, context = None))
+    }
+
+  }
+
   override def run(): Unit = {
     event match {
-      case Create(spec, uniqueClusterId) =>
-        val watch = new StopWatch
-        watch.start()
-        LOG.info(s"Starting to create cluster with ${spec.mkString(",")}")
+      case c @ Create(spec, uniqueClusterId) =>
         val clusterSpec = ClusterSpec.fromSpec(spec)
-        val initializingCluster = RunningCluster(uniqueClusterId, clusterSpec, Booting, None)
-        store.save(initializingCluster)
-
-        try {
-          val clusterContext = ClusterProvisioner.create(clusterSpec)
-          val runningCluster = initializingCluster.copy(context = Some(clusterContext), status = Running)
-          LOG.info(s"Started cluster ${clusterSpec.name}(${runningCluster.id})")
-          LOG.info(s"Master - ${clusterContext.master.getPublicAddresses} / ${clusterContext.master.getPrivateAddresses}")
-          clusterContext.slaves.foreach(slave => LOG.info(s"Started slave - ${slave.getPublicAddresses} / ${slave.getPrivateAddresses}"))
-          store.save(runningCluster)
-          LOG.info(s"Cluster ${clusterSpec.name} has been created in ${DurationFormatUtils.formatDurationHMS(watch.getTime)}")
-
-          val appContext = clusterSpec.appTemplate.context(runningCluster)
-//          LOG.info(s"Registering collector for ${clusterSpec.name}")
-//          RequestProcessor.startCollector(runningCluster, appContext.collector)
-
-          val bootstrapAction = appContext.lifeCycle.bootstrap()
-          ClusterProvisioner.bootstrap(clusterSpec, clusterContext, bootstrapAction)
-
-        } catch {
-          case e: Exception =>
-            LOG.error(e.getMessage, e)
-            store.save(initializingCluster.copy(status = Failed, context = None))
-        }
-
+        handleCreate(uniqueClusterId, clusterSpec)
       case Upscale(clusterId, factor) =>
         LOG.info(s"Starting to upscale the cluster=$clusterId with $factor nodes")
         val watch = new StopWatch
