@@ -18,6 +18,7 @@ object Build extends Build {
 
   lazy val appDependencies = Seq(
     hadoopCore, hadoopClient, jcloudsCore, jcloudsSshj, finatra, typeSafeConfig,
+    logback,
     // test deps
     scalaTest, mockito
   )
@@ -83,7 +84,7 @@ object Dependencies {
   val jcloudsCore = "org.apache.jclouds" % "jclouds-all" % "1.9.0"
   val jcloudsSshj = "org.apache.jclouds.driver" % "jclouds-sshj" % "1.9.0"
   val typeSafeConfig = "com.typesafe" % "config" % "1.2.1"
-
+  val logback = "ch.qos.logback" % "logback-classic" % "1.1.3"
 
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.0" % "test"
   val mockito = "org.mockito" % "mockito-all" % "1.9.5" % "test"
