@@ -12,8 +12,9 @@ case class AWSHardwareConfig(accessKeyId: String, secretKeyId: String,
                              instanceType: String,
                              spotPrice: Option[Double] = None) extends HardwareConfig {
   // TODO: FILL THIS MAPPING
-  val machineTypeToAmiMapping = Map[String, String]()
-  val defaultAmiId = ""
+  val machineTypeToAmiMapping = Map[String, String](
+  )
+  val defaultAmiId = "ami-de57dcb6" // wont be available unless you use ix IAM creds
 
   override def provider: String = ProviderConstants.EC2
   override def imageId: String = machineTypeToAmiMapping.getOrElse(instanceType, defaultAmiId)

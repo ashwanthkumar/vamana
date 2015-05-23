@@ -62,7 +62,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
 
   // TODO: Move it inside HardwareConfig
   def templateFrom(computeService: ComputeService)(hwConfig: HardwareConfig, templateOptions: Option[TemplateOptions]): Template = {
-    val templateBuilder = computeService.templateBuilder().hardwareId(hwConfig.instanceType)
+    val templateBuilder = computeService.templateBuilder().hardwareId(hwConfig.instanceType).imageId(hwConfig.imageId)
     val template = templateOptions.fold(templateBuilder)(opt => templateBuilder.options(opt)).build()
     template
   }
