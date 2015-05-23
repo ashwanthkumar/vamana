@@ -41,6 +41,18 @@ trait PrivateKey {
 
 object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey {
 
+  def templateOptions(name: String)(asMaster: Boolean) = {
+    val options = new TemplateOptions()
+
+    val optionsWithPrivateKey = privateKey match {
+      case Some(key) => options.installPrivateKey(key)
+      case _ => options
+    }
+    val masterOrSlaveTag = if(asMaster) "master" else "slave"
+    optionsWithPrivateKey.clone().tags(List(masterOrSlaveTag, name, "vamana").asJava)
+  }
+
+
   def provisionerFor(cluster: ClusterSpec) = {
     cluster.hwConfig.provider match {
       case ProviderConstants.EC2 => {
@@ -79,27 +91,18 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
     // All nodes that belong to a particular
     // cluster would have the cluster name as tag.
     // This would help querying if need be.
-    val options = new TemplateOptions()
-
-    val optionsWithPrivateKey = privateKey match {
-      case Some(key) => options.installPrivateKey(key)
-      case _ => options
-    }
-
-    val masterOptions = optionsWithPrivateKey.clone().tags(List("master", cluster.name).asJava)
-    val slaveOptions = optionsWithPrivateKey.clone().tags(List("slave", cluster.name).asJava)
+    val masterOptions = templateOptions(cluster.name)(true)
+    val slaveOptions = templateOptions(cluster.name)(false)
 
     val provisioner = provisionerFor(cluster)
-    val master = provisioner
-      .addNodes(hwConfig,
+    val master = provisioner.addNodes(hwConfig,
         cluster.name,
         1,
         templateFrom(provisioner.computeService)(hwConfig, Some(masterOptions))
-      ).head
+      ).head // FIXME: Cause of concern if addNodes fails silently.
     LOG.info(s"Master running at => ${master.getHostname}")
 
-    val slaves = provisioner
-      .addNodes(hwConfig,
+    val slaves = provisioner.addNodes(hwConfig,
         cluster.name,
         cluster.appTemplate.minNodes,
         templateFrom(provisioner.computeService)(hwConfig, Some(slaveOptions)))
@@ -119,17 +122,10 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
     nodeStatus
   }
 
+
   override def upScale(cluster: ClusterSpec, clusterCtx: ClusterContext, factor: Int): ClusterContext = {
     val hwConfig = cluster.hwConfig
-    val tags = List(cluster.name)
-    val options = TemplateOptions.Builder
-      .tags(tags.asJava)
-
-    val optionsWithPrivateKey = privateKey match {
-      case Some(key) => options.installPrivateKey(key)
-      case _ => options
-    }
-    val slaveOptions = optionsWithPrivateKey.clone().tags(("slave" :: tags).asJava)
+    val slaveOptions = templateOptions(cluster.name)(false)
     val provisioner = provisionerFor(cluster)
     val newSlaves = provisioner
       .addNodes(hwConfig,
