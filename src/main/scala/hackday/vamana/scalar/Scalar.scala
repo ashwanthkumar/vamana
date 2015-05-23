@@ -21,7 +21,7 @@ case class InMemoryMetricStore(store: mutable.Map[Long, List[ResourceStat]]) ext
 
 case class ScaleUnit(numberOfNodes: Int)
 
-abstract class Scalar(store: MetricStore, cluster: RunningCluster) {
+abstract class Scalar(cluster: RunningCluster) {
   def scaleUnit(normalizedStat: ResourceStat): ScaleUnit
 
   def downscaleCandidates(number: Int): List[String]
