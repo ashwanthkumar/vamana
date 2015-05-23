@@ -19,13 +19,12 @@ import scala.Some
 
 case class AWSProvisioner(computeService: ComputeService) {
   def addNodes(hwConfig: HardwareConfig, clusterName: String, numInstances: Int, template: Template) = {
-//    val ec2ComputeSvcContext = computeService.getContext.unwrapApi(classOf[EC2ComputeServiceContext])
     computeService.createNodesInGroup(clusterName, numInstances, template).asScala
   }
 
-  def removeNodes(instanceIds: List[String]): Unit = computeService.destroyNodesMatching(new Predicate[NodeMetadata] {
+  def removeNodes(instanceIds: List[String]): Set[NodeMetadata] = computeService.destroyNodesMatching(new Predicate[NodeMetadata] {
     override def apply(t: NodeMetadata): Boolean = instanceIds contains t.getId
-  })
+  }).asScala.toSet
   
   def status(instanceId: String): Unit = computeService.getNodeMetadata(instanceId).getStatus
 }
@@ -33,7 +32,7 @@ case class AWSProvisioner(computeService: ComputeService) {
 
 trait Provisioner {
   def create(cluster: Cluster) : ClusterContext
-  def tearDown(cluster: Cluster)
+  def tearDown(cluster: Cluster, clusterCtx: ClusterContext)
 }
 
 trait PrivateKey {
@@ -90,7 +89,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
     val slaveOptions = options.clone().tags(("slave" :: tags).asJava)
 
     val provisioner = provisionerFor(cluster)
-    val master = provisionerFor(cluster)
+    val master = provisioner
       .addNodes(hwConfig,
         cluster.name,
         1,
@@ -98,7 +97,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
       ).head
     LOG.info(s"Master running at => ${master.getHostname}")
 
-    val slaves = provisionerFor(cluster)
+    val slaves = provisioner
       .addNodes(hwConfig,
         cluster.name,
         cluster.template.appConfig.minNodes,
@@ -109,8 +108,14 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
     ClusterContext(master, slaves.toSet)
   }
 
-  override def tearDown(cluster: Cluster): Unit = {
+  override def tearDown(cluster: Cluster, clusterCtx: ClusterContext): Unit = {
+    LOG.info(s"Tearing down ${cluster.name}")
 
-    LOG.info("Build teardown")
+    val provisioner = provisionerFor(cluster)
+    val nodeIds = clusterCtx.master.getId :: clusterCtx.slaves.toList.map(_.getId)
+    val nodeStatus = provisioner.removeNodes(nodeIds)
+    println("Cluster termination completed...")
+    println(nodeStatus.map(n => s"${n.getHostname} : ${n.getStatus}").mkString("\n"))
+    nodeStatus
   }
 }

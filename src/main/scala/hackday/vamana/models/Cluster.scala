@@ -15,7 +15,7 @@ case class AWSHardwareConfig(accessKeyId: String, secretKeyId: String,
   val machineTypeToAmiMapping = Map[String, String](
     "t2.small" -> "us-west-2/ami-5189a661"
   )
-  val defaultAmiId = "ami-de57dcb6" // wont be available unless you use ix IAM creds
+  val defaultAmiId = "us-east-1/ami-de57dcb6" // wont be available unless you use ix IAM creds
 
   override def provider: String = ProviderConstants.EC2
   override def imageId: String = machineTypeToAmiMapping.getOrElse(instanceType, defaultAmiId)

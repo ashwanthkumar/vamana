@@ -13,5 +13,10 @@ object AWSProvisionerDriver {
       AWSHardwareConfig(accessKey, secretKey, "m3.xlarge")
     ), NotRunning)
     val clusterContext = ClusterProvisioner.create(hadoopCluster)
+    println(clusterContext)
+
+    println("Triggering cluster shutdown...")
+    ClusterProvisioner.tearDown(hadoopCluster, clusterContext)
+
   }
 }
