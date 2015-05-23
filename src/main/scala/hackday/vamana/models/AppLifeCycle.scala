@@ -60,7 +60,7 @@ case class MyServiceLifeCycle(clusterContext: ClusterContext) extends AppLifeCyc
       Copy(mySvcPath, remoteMySVCFullPath)
     )
     val cmd = List(
-      "python /home/ec2-user/MyService.py &"
+      "python -m SimpleHTTPServer 8080 &"
     )
 
     Bootstrap(copyActions, cmd)
@@ -68,7 +68,7 @@ case class MyServiceLifeCycle(clusterContext: ClusterContext) extends AppLifeCyc
 
   override def decommission(): Unit = {
     Decommission(
-      List("ps -aef | grep MyService.py | grep -v | awk '{print $2}' | xargs kill -9")
+      List("ps -aef | grep SimpleHTTPServer | grep -v | awk '{print $2}' | xargs kill -9")
     )
   }
 }

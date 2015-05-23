@@ -19,6 +19,7 @@ import org.jclouds.sshj.config.SshjSshClientModule
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
+import org.jclouds.ec2.compute.EC2ComputeServiceContext
 
 
 // TODO: Revisit, if this 'specialization' is needed
@@ -46,6 +47,8 @@ case class AWSProvisioner(computeService: ComputeService) {
     val runScriptOptions = RunScriptOptions.Builder
       .overrideLoginUser(asUser)
       .overrideLoginPrivateKey(withPrivateKey)
+      .runAsRoot(false)
+      .wrapInInitScript(false)
     nodes.map(node => {
       node -> computeService.runScriptOnNode(node, script, runScriptOptions)
     }).toMap
@@ -75,7 +78,8 @@ trait LoginDetails {
 case class ProviderKey(provider: String, creds: Credentials)
 object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetails {
   val computeServiceCache = mutable.Map[ProviderKey, ComputeService]()
-  
+
+  // NB: Not thread-safe
   def ec2ComputeService(cluster: ClusterSpec) = {
     val hwConfig = cluster.hwConfig
     val creds = hwConfig.credentials
