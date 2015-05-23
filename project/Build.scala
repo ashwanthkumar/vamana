@@ -17,7 +17,7 @@ object Build extends Build {
     ))
 
   lazy val appDependencies = Seq(
-    hadoopCore, hadoopClient, jcloudsCore,
+    hadoopCore, hadoopClient, jcloudsCore, finatra,
     // test deps
     scalaTest, mockito
   )
@@ -26,6 +26,7 @@ object Build extends Build {
     fork in run := false,
     resolvers += Resolver.sonatypeRepo("snapshots"),
     resolvers += "Cloudera Resolver" at "https://repository.cloudera.com/cloudera/cloudera-repos/",
+    resolvers += "Twitter Maven Repo" at "http://maven.twttr.com/",
     parallelExecution in This := false,
     publishMavenStyle := true,
     crossPaths := true,
@@ -78,7 +79,7 @@ object Build extends Build {
 object Dependencies {
   val hadoopCore = "org.apache.hadoop" % "hadoop-core" % "2.0.0-mr1-cdh4.2.1" % "provided"
   val hadoopClient = "org.apache.hadoop" % "hadoop-client" % "2.0.0-mr1-cdh4.2.1" % "provided"
-
+  val finatra = "com.twitter" %% "finatra" % "1.6.0"
   val jcloudsCore = "org.apache.jclouds" % "jclouds-all" % "1.9.0"
 
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.0" % "test"
