@@ -2,9 +2,7 @@ package hackday.vamana.service.config
 
 import com.typesafe.config.{Config, ConfigFactory}
 
-case class RequestProcessor(threadPoolSize: Int)
-
-case class VamanaConfig(clusterStoreType: String, requestProcessor: RequestProcessor)
+case class VamanaConfig(clusterStoreType: String)
 
 object VamanaConfigReader {
   def load = {
@@ -14,14 +12,7 @@ object VamanaConfigReader {
 
   private def vamanaConfig(config: Config) = {
     VamanaConfig(
-      clusterStoreType = config.getString("cluster-store-impl"),
-      requestProcessor = requestProcessor(config.getConfig("request-processor"))
-    )
-  }
-
-  private def requestProcessor(config: Config) = {
-    RequestProcessor(
-      threadPoolSize = config.getInt("thread-pool-size")
+      clusterStoreType = config.getString("cluster-store-impl")
     )
   }
 }

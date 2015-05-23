@@ -4,7 +4,7 @@ trait Event
 
 object Events {
 
-  case class Create(clusterSpec: Map[String, String]) extends Event
+  case class Create(clusterSpec: Map[String, String], clusterId: Long) extends Event
 
   case class Start(id: Long) extends Event
 

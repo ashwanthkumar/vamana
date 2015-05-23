@@ -10,8 +10,7 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
 
   override def run(): Unit = {
     event match {
-      case Create(spec) =>
-        val uniqueClusterId = store.nextId
+      case Create(spec, uniqueClusterId) =>
         LOG.info(s"Starting to create cluster with ${spec.mkString(",")}")
         val clusterSpec = ClusterSpec.fromSpec(spec)
         val initializingCluster = RunningCluster(uniqueClusterId, clusterSpec, Booting, None)
