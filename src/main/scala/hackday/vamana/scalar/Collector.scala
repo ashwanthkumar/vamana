@@ -1,11 +1,11 @@
 package hackday.vamana.scalar
 
 trait Demand {
-  def quantity: Int
+  def needed: Int
 }
 
 trait Supply {
-  def quantity: Int
+  def available: Int
 }
 
 case class ResourceStat(demand: Demand, supply: Supply, timestamp: Long)

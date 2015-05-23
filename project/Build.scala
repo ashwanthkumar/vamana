@@ -17,7 +17,7 @@ object Build extends Build {
     ))
 
   lazy val appDependencies = Seq(
-    hadoopCore, hadoopClient, jcloudsCore, jcloudsSshj, finatra, typeSafeConfig,
+    hadoopCore, hadoopClient, unirest, jsonForUnirest, jcloudsCore, jcloudsSshj, finatra, typeSafeConfig,
     logback,
     // test deps
     scalaTest, mockito
@@ -80,6 +80,9 @@ object Build extends Build {
 object Dependencies {
   val hadoopCore = "org.apache.hadoop" % "hadoop-core" % "2.0.0-mr1-cdh4.2.1" % "provided"
   val hadoopClient = "org.apache.hadoop" % "hadoop-client" % "2.0.0-mr1-cdh4.2.1" % "provided"
+  val unirest = "com.mashape.unirest" % "unirest-java" % "1.4.5"
+  val jsonForUnirest = "org.json" % "json" % "20140107"
+
   val finatra = "com.twitter" %% "finatra" % "1.6.0"
   val jcloudsCore = "org.apache.jclouds" % "jclouds-all" % "1.9.0"
   val jcloudsSshj = "org.apache.jclouds.driver" % "jclouds-sshj" % "1.9.0"
