@@ -1,6 +1,6 @@
 package hackday.vamana.models
 
-trait HardwareConfig {}
+trait HardwareConfig { def provider: String}
 
 trait AppConfig {}
 
@@ -9,7 +9,9 @@ case class HadoopConfig(slaves: List[String], master: String, props: Map[String,
 
 case class AWSHardwareConfig(accessKeyId: String, secretKeyId: String,
                              ami: String, instanceType: String,
-                             securityGroup: String, spotPrice: Option[Double] = None) extends HardwareConfig
+                             securityGroup: String, spotPrice: Option[Double] = None) extends HardwareConfig {
+  override def provider: String = "ec2"
+}
 
 case class ClusterTemplate(appConfig: AppConfig, hwConfig: HardwareConfig)
 
