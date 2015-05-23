@@ -27,33 +27,33 @@ class VamanaController(config: VamanaConfig, clusterStore: ClusterStore) extends
   put("/cluster/:id/start") { request =>
     val clusterId = request.routeParams("id").toLong
     RequestProcessor.process(Events.Start(clusterId))
-    Future(render.json(clusterId))
+    Future(respond("Cluster is being started"))
   }
 
   put("/cluster/:id/stop") { request =>
     val clusterId = request.routeParams("id").toLong
     RequestProcessor.process(Events.Stop(clusterId))
-    Future(render.json(clusterId))
+    Future(respond("Cluster is being terminated"))
   }
 
   delete("/cluster/:id") { request =>
     val clusterId = request.routeParams("id").toLong
     RequestProcessor.process(Events.Teardown(clusterId))
-    Future(render.json(clusterId))
+    Future(respond("Cluster is being terminated"))
   }
 
   put("/cluster/:id/upscale") { request =>
     val clusterId = request.routeParams("id").toLong
     val number = request.params("nodes").toInt
     RequestProcessor.process(Events.Upscale(clusterId, number))
-    Future(render.json(clusterId))
+    Future(respond("Cluster will be upscaled"))
   }
 
   put("/cluster/:id/downscale") { request =>
     val clusterId = request.routeParams("id").toLong
     val number = request.params("nodes").toInt
     RequestProcessor.process(Events.Downscale(clusterId, number))
-    Future(render.json(clusterId))
+    Future(respond("Cluster will be downscaled"))
   }
 
   error { request =>

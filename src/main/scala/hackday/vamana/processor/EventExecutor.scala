@@ -28,6 +28,7 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
         LOG.info(s"Cluster ${clusterSpec.name} has been created in ${DurationFormatUtils.formatDurationHMS(watch.getTime)}")
 
       case Upscale(clusterId, factor) =>
+        LOG.info(s"Starting to upscale the cluster=$clusterId with $factor nodes")
         val watch = new StopWatch
         watch.start()
         val clusterOption = store.get(clusterId)
@@ -41,6 +42,7 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
         }
 
       case Downscale(clusterId, factor) =>
+        LOG.info(s"Starting to downscale the cluster=$clusterId with $factor nodes")
         val watch = new StopWatch
         watch.start()
         val clusterOption = store.get(clusterId)
