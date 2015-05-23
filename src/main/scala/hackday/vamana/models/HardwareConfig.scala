@@ -19,7 +19,7 @@ object HardwareConfig {
           instanceType = spec.getOrElse("machineType", "t1.micro")
         )
 
-        spec.get("spot-price").map(price => config.copy(spotPrice = Some(price.toDouble))).getOrElse(config)
+        spec.get("spot-price").fold(config)(price => config.copy(spotPrice = Some(price.toDouble)))
       case cloud => throw new RuntimeException(s"We still don't support $cloud cloud provider")
     }
   }
