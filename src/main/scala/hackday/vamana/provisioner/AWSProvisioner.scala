@@ -66,13 +66,13 @@ trait LoginDetails {
 // FIXME: ComputeServiceContext is a freaking heavy instance. Cache it per <provider, creds>
 case class ProviderKey(provider: String, creds: Credentials)
 object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetails {
-  val svcContextCache = mutable.Map[ProviderKey, ComputeService]()
+  val computeServiceCache = mutable.Map[ProviderKey, ComputeService]()
   
   def ec2ComputeService(cluster: ClusterSpec) = {
     val hwConfig = cluster.hwConfig
     val creds = hwConfig.credentials
     val providerKey = ProviderKey(ProviderConstants.EC2, creds)
-    svcContextCache.getOrElseUpdate(providerKey, ContextBuilder
+    computeServiceCache.getOrElseUpdate(providerKey, ContextBuilder
       .newBuilder(AWSEC2ProviderMetadata.builder().build())
       .credentials(providerKey.creds.identity, providerKey.creds.credential)
       .modules(Iterable(LoggingModules.firstOrJDKLoggingModule(),new SshjSshClientModule()).asJava)
