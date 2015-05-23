@@ -53,11 +53,11 @@ case class HadoopLifeCycle(clusterContext: ClusterContext, props: Map[String, St
 }
 
 case class MyServiceLifeCycle(clusterContext: ClusterContext) extends AppLifeCycle {
-  val mySvcFullPath = ""
-  val remoteMySVCFullPath = "/home/ec2-user/"
+  val mySvcPath = "/Users/sriram/projects/others/vamana/src/main/python/MyService.py"
+  val remoteMySVCFullPath = "/home/ec2-user/MyService.py"
   override def bootstrap() = {
     val copyActions = List(
-      Copy(mySvcFullPath, remoteMySVCFullPath)
+      Copy(mySvcPath, remoteMySVCFullPath)
     )
     val cmd = List(
       "python /home/ec2-user/MyService.py &"

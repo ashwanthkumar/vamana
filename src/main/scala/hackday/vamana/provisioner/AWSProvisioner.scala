@@ -135,7 +135,9 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
         1,
         templateFrom(provisioner.computeService)(hwConfig, Some(masterOptions))
       ).head // FIXME: Cause of concern if addNodes fails silently.
-    LOG.info(s"Master bootstrapped and running\n${master.getHostname}")
+    LOG.info(s"Master hostname: ${master.getHostname}")
+    LOG.info(s"Master public addr: ${master.getPublicAddresses}")
+    LOG.info(s"Master private addr: ${master.getPrivateAddresses}")
 
     val slaves = provisioner.addNodes(hwConfig,
         cluster.name,
