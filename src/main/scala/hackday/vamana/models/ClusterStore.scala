@@ -10,6 +10,13 @@ trait ClusterStore {
   def remove(clusterId: Long)
 }
 
+object ClusterStore {
+  def apply(storeType: String) = storeType match {
+    case "memory" => InMemoryClusterStore.getInstance
+    case x => throw new RuntimeException(s"We still don't have support for $x")
+  }
+}
+
 
 case class InMemoryClusterStore(store: mutable.Map[Long, Cluster]) extends ClusterStore {
   override def save(cluster: Cluster): Unit = store.put(cluster.id, cluster)
