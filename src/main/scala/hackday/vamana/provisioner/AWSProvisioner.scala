@@ -104,7 +104,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
     val slaves = provisioner
       .addNodes(hwConfig,
         cluster.name,
-        cluster.template.appConfig.minNodes,
+        cluster.template.appTemplate.minNodes,
         templateFrom(provisioner.computeService)(hwConfig, Some(slaveOptions)))
 
     LOG.info(s"Slaves running at => ${slaves.map(_.getHostname).mkString("\n")}")
