@@ -16,7 +16,7 @@ object HardwareConfig {
           accessKeyId = spec("accessId"),
           secretKeyId = spec("secretKey"),
           ami = spec.getOrElse("ami", "foo-bar-ami"),
-          instanceType = spec.getOrElse("machineType", "t1.micro")
+          instanceType = spec.getOrElse("instanceType", "t1.micro")
         )
 
         spec.get("spot-price").fold(config)(price => config.copy(spotPrice = Some(price.toDouble)))

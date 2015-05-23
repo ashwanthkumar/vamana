@@ -6,8 +6,8 @@ object AppTemplate {
       case "hadoop" =>
         HadoopTemplate(
           props = spec,
-          minNodes = spec.getOrElse("minNodes", "1").toInt,
-          maxNodes = spec.getOrElse("maxNodes", "2").toInt
+          minNodes = spec("minNodes").toInt,
+          maxNodes = spec("maxNodes").toInt
         )
       case app => throw new RuntimeException(s"We still don't know an application for $app")
     }

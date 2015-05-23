@@ -9,7 +9,8 @@ class EventExecutor(event: Event, store: ClusterStore, provisioner: Provisioner)
     println(s"I'm executing $event")
     event match {
       case Create(spec) =>
-        provisioner.create(Cluster.fromSpec(spec))
+        val uniqueClusterId = store.nextId
+        provisioner.create(Cluster.fromSpec(spec ++ Map("id" -> uniqueClusterId.toString)))
     }
   }
 }

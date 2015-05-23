@@ -2,7 +2,7 @@ package hackday.vamana.service
 
 import com.twitter.finatra.Controller
 import com.twitter.util.Future
-import hackday.vamana.models.{Events, ClusterStore}
+import hackday.vamana.models.{ClusterSpecValidator, Events, ClusterStore}
 import hackday.vamana.processor.RequestProcessor
 import hackday.vamana.service.config.VamanaConfigReader
 
@@ -13,6 +13,8 @@ class VamanaController extends Controller {
 
   post("/cluster/create") { request =>
     val clusterSpec = JsonUtils.fromJsonAsMap(request.contentString)
+    require(ClusterSpecValidator.validate(clusterSpec), "given cluster is not valid, please check the documentation on the required fields")
+    RequestProcessor.process(Events.Create(clusterSpec))
     Future(render.json(s"cluster created as ${Random.nextInt()}"))
   }
 
