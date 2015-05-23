@@ -38,7 +38,7 @@ class VamanaController(config: VamanaConfig, clusterStore: ClusterStore) extends
 
   delete("/cluster/:id") { request =>
     val clusterId = request.routeParams("id").toLong
-    RequestProcessor.process(Events.Delete(clusterId))
+    RequestProcessor.process(Events.Teardown(clusterId))
     Future(render.json(clusterId))
   }
 

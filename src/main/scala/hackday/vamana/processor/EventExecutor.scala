@@ -51,6 +51,19 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
           ClusterProvisioner.downScale(cluster.spec, context, factor)
           LOG.info(s"Downscaled the ${cluster.spec.name} by $factor nodes in ${DurationFormatUtils.formatDurationHMS(watch.getTime)}")
         }
+
+      case Teardown(clusterId) =>
+        val watch = new StopWatch
+        watch.start()
+        val clusterOption = store.get(clusterId)
+        for (
+          cluster <- clusterOption;
+          context <- cluster.context
+        ) {
+          ClusterProvisioner.tearDown(cluster.spec, context)
+          LOG.info(s"Cluster ${cluster.spec.name} has been terminated in ${DurationFormatUtils.formatDurationHMS(watch.getTime)}")
+        }
     }
   }
+
 }

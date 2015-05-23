@@ -12,7 +12,7 @@ object Events {
 
   case class Status(id: Long) extends Event
 
-  case class Delete(id: Long) extends Event
+  case class Teardown(id: Long) extends Event
 
   case class Upscale(id: Long, number: Int) extends Event
 
