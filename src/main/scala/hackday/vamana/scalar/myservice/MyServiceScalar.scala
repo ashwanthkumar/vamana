@@ -5,7 +5,7 @@ import hackday.vamana.models.RunningCluster
 import hackday.vamana.util.VamanaLogger
 
 class MyServiceScalar(cluster: RunningCluster) extends Scalar(cluster) with VamanaLogger {
-  override def scaleUnit(normalizedStat: ResourceStat): ScaleUnit = ScaleUnit(normalizedStat.demand.needed - normalizedStat.supply.available)
+  override def scaleUnit(normalizedStat: ResourceStat): ScaleUnit = ScaleUnit(normalizedStat.demand.quantity - normalizedStat.supply.available)
 
   override def downscaleCandidates(number: Int): List[String] = {
     cluster.context match {

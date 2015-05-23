@@ -1,7 +1,7 @@
 package hackday.vamana.scalar
 
 trait Demand {
-  def needed: Int
+  def quantity: Int
 }
 
 trait Supply {
