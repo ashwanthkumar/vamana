@@ -13,12 +13,14 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
       case Create(spec) =>
         val uniqueClusterId = store.nextId
         LOG.info(s"Starting to create cluster with ")
-        val clusterSpec = ClusterSpec.fromSpec(spec ++ Map("id" -> uniqueClusterId.toString))
+        val clusterSpec = ClusterSpec.fromSpec(spec)
+        val initializingCluster = RunningCluster(uniqueClusterId, clusterSpec, Booting, None)
+        store.save(initializingCluster)
+
         val clusterContext = ClusterProvisioner.create(clusterSpec)
-        val runningCluster = RunningCluster(uniqueClusterId, clusterSpec, Running, Some(clusterContext))
+        val runningCluster = initializingCluster.copy(context = Some(clusterContext), status = Running)
         LOG.info(s"Started cluster ${clusterSpec.name}(${runningCluster.id})")
         LOG.info(s"Master - ${clusterContext.master.getPublicAddresses} / ${clusterContext.master.getPrivateAddresses}")
-        LOG.info("Slaves - ")
         clusterContext.slaves.foreach(slave => LOG.info(s"Started slave - ${slave.getPublicAddresses} / ${slave.getPrivateAddresses}"))
         store.save(runningCluster)
 
