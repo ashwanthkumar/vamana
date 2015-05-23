@@ -9,9 +9,18 @@ import org.jclouds.compute.options.TemplateOptions
 import org.jclouds.compute.{ComputeServiceContext, ComputeService}
 import org.jclouds.compute.domain.NodeMetadata
 
+import scala.collection.JavaConverters._
+
+
 case class AWSProvisioner(computeService: ComputeService) {
   def addNodes(hwConfig: HardwareConfig, clusterName: String, numInstances: Int, templateOptions: Option[TemplateOptions] = None) = {
-    templateOptions.map(opt => computeService.createNodesInGroup(clusterName, numInstances, opt))
+    val nodes = templateOptions match {
+      case Some(opt) => {
+        computeService.createNodesInGroup(clusterName, numInstances, opt)
+      }
+      case _ => computeService.createNodesInGroup(clusterName, numInstances)
+    }
+    nodes.asScala
   }
   
   def removeNodes(instanceIds: List[String]): Unit = computeService.destroyNodesMatching(new Predicate[NodeMetadata] {
@@ -28,7 +37,7 @@ trait Provisioner {
 }
 
 trait PrivateKey {
-  val privateKey = ""
+  val privateKey = Option(System.getenv("PRIVATE_KEY_FILE")) getOrElse "/Users/sriram/indix.pem"
 }
 
 object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey {
@@ -60,8 +69,17 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
   // TODO: Override properties with appropriate ami query
   override def create(cluster: Cluster) = {
     val hwConfig = cluster.template.hwConfig
-    val nodes = provisionerFor(cluster).addNodes(hwConfig, cluster.name, cluster.template.appConfig.minNodes, Some(TemplateOptions.Builder.installPrivateKey(privateKey)))
-    LOG.info(s"Report cluster start status: $nodes")
+    // All nodes that belong to a particular
+    // cluster would have the cluster name tag set.
+    // This would help querying if need be.
+    val options = TemplateOptions.Builder
+      .installPrivateKey(privateKey)
+      .tags(Iterable(cluster.name).asJava)
+
+    val nodes = provisionerFor(cluster)
+      .addNodes(hwConfig, cluster.name, cluster.template.appConfig.minNodes, Some(options))
+    LOG.info(s"Provisioned the following nodes: ${nodes.map(_.getHostname).mkString("\n")}")
+    LOG.info("TODO: Report an appropriate status!")
   }
 
   override def tearDown(cluster: Cluster): Unit = {
