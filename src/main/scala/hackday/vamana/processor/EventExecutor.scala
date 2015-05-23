@@ -27,6 +27,10 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
           clusterContext.slaves.foreach(slave => LOG.info(s"Started slave - ${slave.getPublicAddresses} / ${slave.getPrivateAddresses}"))
           store.save(runningCluster)
           LOG.info(s"Cluster ${clusterSpec.name} has been created in ${DurationFormatUtils.formatDurationHMS(watch.getTime)}")
+
+          val appContext = clusterSpec.appTemplate.context(clusterContext)
+          LOG.info(s"Registering collector for ${clusterSpec.name}")
+          RequestProcessor.startCollector(runningCluster, appContext.collector)
         } catch {
           case e: Exception =>
             LOG.error(e.getMessage, e)
@@ -83,6 +87,9 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
           context <- cluster.context
         ) {
           try {
+            LOG.info(s"Stopping stats collector for ${cluster.spec.name}")
+            RequestProcessor.stopCollector(cluster.id)
+
             store.save(cluster.copy(status = Terminating))
             ClusterProvisioner.tearDown(cluster.spec, context)
             store.save(cluster.copy(status = NotRunning, context = None))
