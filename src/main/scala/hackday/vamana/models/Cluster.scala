@@ -4,7 +4,10 @@ import hackday.vamana.provisioner.ProviderConstants
 import org.jclouds.compute.domain.NodeMetadata
 
 
-case class ClusterContext(master: NodeMetadata, slaves: Set[NodeMetadata])
+case class ClusterContext(master: NodeMetadata, slaves: Set[NodeMetadata]) {
+  def allNodeIds = all.map(_.getId)
+  def all = master :: slaves.toList
+}
 
 case class HadoopTemplate(props: Map[String, String], minNodes: Int, maxNodes: Int) extends AppTemplate {
   override def context(clusterCtx: ClusterContext): AppContext = ???

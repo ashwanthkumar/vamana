@@ -14,6 +14,12 @@ object AWSProvisionerDriver {
     val clusterContext = ClusterProvisioner.create(hadoopCluster)
     println(clusterContext)
 
+    val results = ClusterProvisioner.runScriptOn(hadoopCluster, clusterContext, "ls")
+    results.foreach{r =>
+      println("--------- Results ----------")
+      println(r)
+    }
+
     println("Triggering cluster shutdown...")
     ClusterProvisioner.tearDown(hadoopCluster, clusterContext)
 
