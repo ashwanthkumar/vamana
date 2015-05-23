@@ -58,8 +58,9 @@ trait Provisioner {
   def upScale(cluster: ClusterSpec, clusterCtx: ClusterContext, factor: Int) : ClusterContext
   def downScale(cluster: ClusterSpec, clusterCtx: ClusterContext, factor: Int) : ClusterContext
   def tearDown(cluster: ClusterSpec, clusterCtx: ClusterContext)
-  def runScriptOn(cluster: ClusterSpec, clusterCtx: ClusterContext, script: String) : Iterable[String]
+  def runScriptOn(cluster: ClusterSpec, clusterCtx: ClusterContext, script: String) : Iterable[ExecResponse]
   def bootstrap(cluster: ClusterSpec, clusterCtx: ClusterContext, btstrap: Bootstrap)
+  def shutdown: Unit
 }
 
 trait LoginDetails {
@@ -153,7 +154,6 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
     val nodeStatus = provisioner.removeNodes(nodeIds)
     LOG.info("Cluster termination completed...")
     LOG.info(nodeStatus.map(n => s"${n.getHostname} : ${n.getStatus}").mkString("\n"))
-    nodeStatus
   }
 
 
@@ -180,7 +180,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
     val results = provisioner.runScriptOn(clusterCtx.allNodeIds, script, user, privateKeyWithFallback)
     results.map { case (node, response) =>
       LOG.info(s"Command completed on $node with return code: ${response.getExitStatus}")
-      response.getOutput
+      response
     }
   }
 
@@ -196,4 +196,6 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
       provisioner.runScriptOn(clusterCtx.allNodeIds, cmd, user, privateKeyWithFallback)
     }
   }
+
+  override def shutdown = computeServiceCache.values.foreach(_.getContext.close())
 }

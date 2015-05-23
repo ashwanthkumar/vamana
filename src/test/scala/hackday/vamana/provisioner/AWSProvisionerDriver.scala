@@ -14,14 +14,18 @@ object AWSProvisionerDriver {
     val clusterContext = ClusterProvisioner.create(hadoopCluster)
     println(clusterContext)
 
-    val results = ClusterProvisioner.runScriptOn(hadoopCluster, clusterContext, "ls")
+    ClusterProvisioner.bootstrap(hadoopCluster, clusterContext, Bootstrap(Copy("/tmp/logback.xml", "/tmp/logback_remote.xml"):: Nil, List[String]()))
+
+    val results = ClusterProvisioner.runScriptOn(hadoopCluster, clusterContext, "ls -ltr /tmp/logback_remote.xml")
     results.foreach{r =>
       println("--------- Results ----------")
-      println(r)
+      println(s"Stdout: ${r.getOutput}")
+      println(s"Stderr: ${r.getError}")
     }
 
     println("Triggering cluster shutdown...")
     ClusterProvisioner.tearDown(hadoopCluster, clusterContext)
 
+    ClusterProvisioner.shutdown
   }
 }
