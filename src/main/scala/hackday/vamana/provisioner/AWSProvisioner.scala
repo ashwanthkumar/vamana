@@ -12,6 +12,8 @@ import org.jclouds.logging.LoggingModules
 import org.jclouds.sshj.config.SshjSshClientModule
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
+
 
 // TODO: Revisit, if this 'specialization' is needed
 case class AWSProvisioner(computeService: ComputeService) {
@@ -62,11 +64,24 @@ trait LoginDetails {
 }
 
 // FIXME: ComputeServiceContext is a freaking heavy instance. Cache it per <provider, creds>
+case class ProviderKey(provider: String, creds: Credentials)
 object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetails {
-
+  val svcContextCache = mutable.Map[ProviderKey, ComputeService]()
+  
+  def ec2ComputeService(cluster: ClusterSpec) = {
+    val hwConfig = cluster.hwConfig
+    val creds = hwConfig.credentials
+    val providerKey = ProviderKey(ProviderConstants.EC2, creds)
+    svcContextCache.getOrElseUpdate(providerKey, ContextBuilder
+      .newBuilder(AWSEC2ProviderMetadata.builder().build())
+      .credentials(providerKey.creds.identity, providerKey.creds.credential)
+      .modules(Iterable(LoggingModules.firstOrJDKLoggingModule(),new SshjSshClientModule()).asJava)
+      .buildView(classOf[ComputeServiceContext]).getComputeService)
+  }
+  
   def templateOptions(name: String)(asMaster: Boolean) = {
     val options = new TemplateOptions()
-
+    options.overrideLoginUser(user)
     val optionsWithPrivateKey = privateKey match {
       case Some(key) => options.installPrivateKey(key)
       case _ => options
@@ -79,15 +94,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
   def provisionerFor(cluster: ClusterSpec) = {
     cluster.hwConfig.provider match {
       case ProviderConstants.EC2 => {
-        val hwConfig = cluster.hwConfig
-        val creds = hwConfig.credentials
-        val computeService = ContextBuilder
-          .newBuilder(AWSEC2ProviderMetadata.builder().build())
-          .credentials(creds.identity, creds.credential)
-          .modules(Iterable(LoggingModules.firstOrJDKLoggingModule(),new SshjSshClientModule()).asJava)
-          .buildView(classOf[ComputeServiceContext])
-          .getComputeService
-        AWSProvisioner(computeService)
+        AWSProvisioner(ec2ComputeService(cluster))
       }
       case _ => throw new RuntimeException(s"Only ${ProviderConstants.EC2} supported at this point")
     }

@@ -5,7 +5,7 @@ import hackday.vamana.models.RunningCluster
 import org.apache.commons.httpclient.HttpClient
 import com.mashape.unirest.http.Unirest
 import scala.collection.JavaConverters._
-import hackday.vamana.util.VamanaLogger
+import hackday.vamana.util.{Clock, VamanaLogger}
 import com.mashape.unirest.request.HttpRequest
 import org.jclouds.compute.domain.NodeMetadata
 import hackday.vamana.service.JsonUtils
@@ -17,7 +17,7 @@ case class MyServiceDemand(quantity: Int) extends Demand {
 case class MyServiceSupply(available: Int) extends Supply
 
 
-class MyServiceCollector(cluster: RunningCluster) extends Collector with VamanaLogger {
+class MyServiceCollector(cluster: RunningCluster) extends Collector with VamanaLogger with Clock {
   val perNodeSupply = 100
   def stats(node: NodeMetadata) = {
     val url = s"http://${node.getPublicAddresses}:8080/status"
@@ -30,6 +30,6 @@ class MyServiceCollector(cluster: RunningCluster) extends Collector with VamanaL
     val nodes = cluster.context.fold(List[NodeMetadata]()){ ctx => ctx.master :: ctx.slaves.toList }
     val totalDemand = nodes.map(stats).reduce(_ + _)
     val totalSupply = MyServiceSupply(perNodeSupply * nodes.size)
-    ResourceStat(totalDemand, totalSupply, System.currentTimeMillis())
+    ResourceStat(totalDemand, totalSupply, NOW)
   }
 }
