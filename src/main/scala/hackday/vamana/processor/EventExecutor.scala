@@ -31,6 +31,10 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
           val appContext = clusterSpec.appTemplate.context(clusterContext)
           LOG.info(s"Registering collector for ${clusterSpec.name}")
           RequestProcessor.startCollector(runningCluster, appContext.collector)
+
+          val bootstrapAction = appContext.lifeCycle.bootstrap()
+          ClusterProvisioner.bootstrap(clusterSpec, clusterContext, bootstrapAction)
+
         } catch {
           case e: Exception =>
             LOG.error(e.getMessage, e)

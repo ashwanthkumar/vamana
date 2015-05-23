@@ -16,7 +16,7 @@ object AppTemplate {
   }
 }
 
-case class AppContext(collector: Collector, scalar: Scalar)
+case class AppContext(collector: Collector, scalar: Scalar, lifeCycle: AppLifeCycle)
 
 trait AppTemplate {
   def maxNodes: Int

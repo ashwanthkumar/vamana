@@ -51,6 +51,7 @@ trait Provisioner {
   def downScale(cluster: ClusterSpec, clusterCtx: ClusterContext, factor: Int) : ClusterContext
   def tearDown(cluster: ClusterSpec, clusterCtx: ClusterContext)
   def runScriptOn(cluster: ClusterSpec, clusterCtx: ClusterContext, script: String) : Iterable[String]
+  def bootstrap(cluster: ClusterSpec, clusterCtx: ClusterContext, btstrap: Bootstrap)
 }
 
 trait LoginDetails {
@@ -166,6 +167,19 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
     results.map { case (node, response) =>
       LOG.info(s"Command completed on $node with return code: ${response.getExitStatus}")
       response.getOutput
+    }
+  }
+
+  override def bootstrap(cluster: ClusterSpec, clusterCtx: ClusterContext, bootstrapAction: Bootstrap): Unit = {
+    val provisioner = provisionerFor(cluster)
+    bootstrapAction.copyActions.foreach{ copy =>
+      LOG.info(s"Copying ${copy.src} to ${copy.dst}")
+      provisioner.pushFileTo(clusterCtx.all, copy.src, copy.dst)
+    }
+
+    bootstrapAction.commands.foreach{ cmd =>
+      LOG.info(s"Executing command $cmd")
+      provisioner.runScriptOn(clusterCtx.allNodeIds, cmd, user, privateKeyWithFallback)
     }
   }
 }
