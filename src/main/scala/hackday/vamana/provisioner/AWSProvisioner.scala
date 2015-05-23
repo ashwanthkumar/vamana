@@ -10,8 +10,8 @@ import org.jclouds.compute.{ComputeServiceContext, ComputeService}
 import org.jclouds.compute.domain.NodeMetadata
 
 case class AWSProvisioner(computeService: ComputeService) {
-  def addNodes(hwConfig: HardwareConfig, numInstances: Int, templateOptions: Option[TemplateOptions] = None) = {
-    templateOptions.map(opt => computeService.createNodesInGroup(hwConfig.securityGroup, numInstances, opt))
+  def addNodes(hwConfig: HardwareConfig, clusterName: String, numInstances: Int, templateOptions: Option[TemplateOptions] = None) = {
+    templateOptions.map(opt => computeService.createNodesInGroup(clusterName, numInstances, opt))
   }
   
   def removeNodes(instanceIds: List[String]): Unit = computeService.destroyNodesMatching(new Predicate[NodeMetadata] {
@@ -60,8 +60,8 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
   // TODO: Override properties with appropriate ami query
   override def create(cluster: Cluster) = {
     val hwConfig = cluster.template.hwConfig
-    val nodes = provisionerFor(cluster).addNodes(hwConfig, cluster.template.appConfig.minNodes, Some(TemplateOptions.Builder.installPrivateKey(privateKey)))
-    LOG.info(s"Report cluster start status: ${nodes}")
+    val nodes = provisionerFor(cluster).addNodes(hwConfig, cluster.name, cluster.template.appConfig.minNodes, Some(TemplateOptions.Builder.installPrivateKey(privateKey)))
+    LOG.info(s"Report cluster start status: $nodes")
   }
 
   override def tearDown(cluster: Cluster): Unit = {
