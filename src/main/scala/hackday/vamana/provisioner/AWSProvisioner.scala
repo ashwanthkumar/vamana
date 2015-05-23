@@ -1,6 +1,10 @@
 package hackday.vamana.provisioner
 
-import com.google.common.base.Predicate
+import java.io.File
+
+import com.google.common.base.Charsets.UTF_8
+import com.google.common.base.{Charsets, Predicate}
+import com.google.common.io.Files
 import hackday.vamana.models._
 import hackday.vamana.util.VamanaLogger
 import org.jclouds.ContextBuilder
@@ -8,6 +12,8 @@ import org.jclouds.aws.ec2.AWSEC2ProviderMetadata
 import org.jclouds.compute.domain._
 import org.jclouds.compute.options.{RunScriptOptions, TemplateOptions}
 import org.jclouds.compute.{ComputeService, ComputeServiceContext}
+import org.jclouds.domain.LoginCredentials
+import org.jclouds.io.Payloads
 import org.jclouds.logging.LoggingModules
 import org.jclouds.sshj.config.SshjSshClientModule
 
@@ -32,7 +38,7 @@ case class AWSProvisioner(computeService: ComputeService) {
   def pushFileTo(nodes: List[NodeMetadata], src: String, dest: String) = {
     val sshClientForNode = computeService.getContext.utils().sshForNode()
     nodes.par.foreach{ node =>
-      sshClientForNode.apply(node).put(src, dest)
+      sshClientForNode.apply(node).put(dest, Payloads.newFilePayload(new File(src)))
     }
   }
 
@@ -57,9 +63,10 @@ trait Provisioner {
 }
 
 trait LoginDetails {
-  val user = "ec2-user"
+//  val user = "ec2-user"
+  val user = System.getProperty("user.name")
   val privateKeyFile = Option(System.getenv("PRIVATE_KEY_FILE"))
-  val privateKey = privateKeyFile.map(pkFile => io.Source.fromFile(pkFile).getLines().mkString("\n"))
+  val privateKey = privateKeyFile.map(pkFile => Files.toString(new File(pkFile), UTF_8))
   val privateKeyWithFallback = privateKey.getOrElse(io.Source.fromFile("/Users/sriram/indix.pem").getLines().mkString("\n"))
 }
 

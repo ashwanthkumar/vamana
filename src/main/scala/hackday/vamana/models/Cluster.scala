@@ -10,7 +10,7 @@ case class ClusterContext(master: NodeMetadata, slaves: Set[NodeMetadata]) {
 }
 
 case class HadoopTemplate(props: Map[String, String], minNodes: Int, maxNodes: Int) extends AppTemplate {
-  override def context(clusterCtx: ClusterContext): AppContext = AppContext(null, null, HadoopLifeCycle(clusterCtx))
+  override def context(clusterCtx: ClusterContext): AppContext = AppContext(null, null, HadoopLifeCycle(clusterCtx, props))
 }
 
 case class AWSHardwareConfig(accessKeyId: String, secretKeyId: String,
