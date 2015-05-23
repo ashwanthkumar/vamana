@@ -24,7 +24,7 @@ case class AWSProvisioner(computeService: ComputeService) {
 
 trait Provisioner {
   def create(cluster: Cluster)
-  def teardown(cluster: Cluster)
+  def tearDown(cluster: Cluster)
 }
 
 trait PrivateKey {
@@ -57,14 +57,14 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
   * - delegate calls
   * */
 
-   // TODO: Override properties with appropriate ami query
+  // TODO: Override properties with appropriate ami query
   override def create(cluster: Cluster) = {
     val hwConfig = cluster.template.hwConfig
     val nodes = provisionerFor(cluster).addNodes(hwConfig, cluster.template.appConfig.minNodes, Some(TemplateOptions.Builder.installPrivateKey(privateKey)))
     LOG.info(s"Report cluster start status: ${nodes}")
   }
 
-  override def teardown(cluster: Cluster): Unit = {
+  override def tearDown(cluster: Cluster): Unit = {
     LOG.info("Build teardown")
   }
 }
