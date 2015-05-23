@@ -1,9 +1,10 @@
 package hackday.vamana.models
 
 import hackday.vamana.provisioner.ProviderConstants
+import org.jclouds.compute.domain.NodeMetadata
 
 
-case class AppContext(master: String, slaves: List[String])
+case class ClusterContext(master: NodeMetadata, slaves: Set[NodeMetadata])
 
 case class HadoopTemplate(props: Map[String, String], minNodes: Int, maxNodes: Int) extends AppTemplate
 

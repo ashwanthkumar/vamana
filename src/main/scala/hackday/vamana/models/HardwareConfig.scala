@@ -4,8 +4,8 @@ case class Credentials(identity: String, credential: String)
 
 trait HardwareConfig {
   def provider: String
-
   def credentials: Credentials
+  def instanceType: String
 }
 
 object HardwareConfig {

@@ -1,13 +1,13 @@
 package hackday.vamana.provisioner
 
 import com.google.common.base.Predicate
-import hackday.vamana.models.{Cluster, AWSHardwareConfig, HardwareConfig}
+import hackday.vamana.models.{ClusterContext, Cluster, HardwareConfig}
 import hackday.vamana.util.VamanaLogger
 import org.jclouds.ContextBuilder
 import org.jclouds.aws.ec2.AWSEC2ProviderMetadata
 import org.jclouds.compute.options.TemplateOptions
-import org.jclouds.compute.{ComputeServiceContext, ComputeService}
-import org.jclouds.compute.domain.NodeMetadata
+import org.jclouds.compute.{domain, ComputeServiceContext, ComputeService}
+import org.jclouds.compute.domain.{Template, TemplateBuilderSpec, NodeMetadata}
 
 import scala.collection.JavaConverters._
 import org.jclouds.logging.LoggingModules
@@ -15,16 +15,10 @@ import org.jclouds.sshj.config.SshjSshClientModule
 
 
 case class AWSProvisioner(computeService: ComputeService) {
-  def addNodes(hwConfig: HardwareConfig, clusterName: String, numInstances: Int, templateOptions: Option[TemplateOptions] = None) = {
-    val nodes = templateOptions match {
-      case Some(opt) => {
-        computeService.createNodesInGroup(clusterName, numInstances, opt)
-      }
-      case _ => computeService.createNodesInGroup(clusterName, numInstances)
-    }
-    nodes.asScala
+  def addNodes(hwConfig: HardwareConfig, clusterName: String, numInstances: Int, template: Template) = {
+    computeService.createNodesInGroup(clusterName, numInstances, template).asScala
   }
-  
+
   def removeNodes(instanceIds: List[String]): Unit = computeService.destroyNodesMatching(new Predicate[NodeMetadata] {
     override def apply(t: NodeMetadata): Boolean = instanceIds contains t.getId
   })
@@ -62,6 +56,13 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
     }
   }
 
+  // TODO: Move it inside HardwareConfig
+  def templateFrom(computeService: ComputeService)(hwConfig: HardwareConfig, templateOptions: Option[TemplateOptions]): Template = {
+    val templateBuilder = computeService.templateBuilder().hardwareId(hwConfig.instanceType)
+    val template = templateOptions.fold(templateBuilder)(opt => templateBuilder.options(opt)).build()
+    template
+  }
+
   /*
   * Expected to provision a cluster
   *
@@ -76,17 +77,37 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
     // All nodes that belong to a particular
     // cluster would have the cluster name tag set.
     // This would help querying if need be.
+    val tags = List(cluster.name)
     val options = TemplateOptions.Builder
       .installPrivateKey(privateKey)
-      .tags(Iterable(cluster.name).asJava)
+      .tags(tags.asJava)
 
-    val nodes = provisionerFor(cluster)
-      .addNodes(hwConfig, cluster.name, cluster.template.appConfig.minNodes, Some(options))
-    LOG.info(s"Provisioned the following nodes: ${nodes.map(_.getHostname).mkString("\n")}")
+    val masterOptions = options.clone().tags(("master" :: tags).asJava)
+    val slaveOptions = options.clone().tags(("slave" :: tags).asJava)
+
+    val provisioner = provisionerFor(cluster)
+    val master = provisionerFor(cluster)
+      .addNodes(hwConfig,
+        cluster.name,
+        1,
+        templateFrom(provisioner.computeService)(hwConfig, Some(masterOptions))
+      ).head
+
+    LOG.info(s"Master running at => ${master.getHostname}")
+
+    val slaves = provisionerFor(cluster)
+      .addNodes(hwConfig,
+        cluster.name,
+        cluster.template.appConfig.minNodes,
+        templateFrom(provisioner.computeService)(hwConfig, Some(slaveOptions)))
+    LOG.info(s"Slaves running at => ${slaves.map(_.getHostname).mkString("\n")}")
     LOG.info("TODO: Report an appropriate status!")
+
+    ClusterContext(master, slaves.toSet)
   }
 
   override def tearDown(cluster: Cluster): Unit = {
+    
     LOG.info("Build teardown")
   }
 }
