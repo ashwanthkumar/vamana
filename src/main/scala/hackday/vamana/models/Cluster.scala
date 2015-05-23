@@ -1,5 +1,7 @@
 package hackday.vamana.models
 
+import hackday.vamana.provisioner.ProviderConstants
+
 case class Credentials(identity: String, credential: String)
 
 trait HardwareConfig {
@@ -21,7 +23,7 @@ case class HadoopConfig(slaves: List[String], master: String, props: Map[String,
 case class AWSHardwareConfig(accessKeyId: String, secretKeyId: String,
                              ami: String, instanceType: String,
                              securityGroup: String, spotPrice: Option[Double] = None) extends HardwareConfig {
-  override def provider: String = "ec2"
+  override def provider: String = ProviderConstants.EC2
 
   override def credentials: Credentials = Credentials(accessKeyId, secretKeyId)
 }

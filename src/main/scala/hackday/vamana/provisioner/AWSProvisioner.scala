@@ -35,7 +35,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
   
   def provisionerFor(cluster: Cluster) = {
     cluster.template.hwConfig.provider match {
-      case "aws-ec2" => {
+      case ProviderConstants.EC2 => {
         val hwConfig = cluster.template.hwConfig
         val creds = hwConfig.credentials
         val computeService = ContextBuilder
