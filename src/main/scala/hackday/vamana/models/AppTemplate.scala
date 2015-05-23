@@ -1,5 +1,7 @@
 package hackday.vamana.models
 
+import hackday.vamana.scalar.{Scalar, Collector}
+
 object AppTemplate {
   def fromSpec(spec: Map[String, String]) = {
     spec("app") match {
@@ -14,8 +16,12 @@ object AppTemplate {
   }
 }
 
+case class AppContext(collector: Collector, scalar: Scalar)
+
 trait AppTemplate {
   def maxNodes: Int
 
   def minNodes: Int
+
+  def context(clusterCtx: ClusterContext): AppContext
 }

@@ -6,7 +6,9 @@ import org.jclouds.compute.domain.NodeMetadata
 
 case class ClusterContext(master: NodeMetadata, slaves: Set[NodeMetadata])
 
-case class HadoopTemplate(props: Map[String, String], minNodes: Int, maxNodes: Int) extends AppTemplate
+case class HadoopTemplate(props: Map[String, String], minNodes: Int, maxNodes: Int) extends AppTemplate {
+  override def context(clusterCtx: ClusterContext): AppContext = ???
+}
 
 case class AWSHardwareConfig(accessKeyId: String, secretKeyId: String,
                              instanceType: String,
