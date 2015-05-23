@@ -19,13 +19,19 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
         val initializingCluster = RunningCluster(uniqueClusterId, clusterSpec, Booting, None)
         store.save(initializingCluster)
 
-        val clusterContext = ClusterProvisioner.create(clusterSpec)
-        val runningCluster = initializingCluster.copy(context = Some(clusterContext), status = Running)
-        LOG.info(s"Started cluster ${clusterSpec.name}(${runningCluster.id})")
-        LOG.info(s"Master - ${clusterContext.master.getPublicAddresses} / ${clusterContext.master.getPrivateAddresses}")
-        clusterContext.slaves.foreach(slave => LOG.info(s"Started slave - ${slave.getPublicAddresses} / ${slave.getPrivateAddresses}"))
-        store.save(runningCluster)
-        LOG.info(s"Cluster ${clusterSpec.name} has been created in ${DurationFormatUtils.formatDurationHMS(watch.getTime)}")
+        try {
+          val clusterContext = ClusterProvisioner.create(clusterSpec)
+          val runningCluster = initializingCluster.copy(context = Some(clusterContext), status = Running)
+          LOG.info(s"Started cluster ${clusterSpec.name}(${runningCluster.id})")
+          LOG.info(s"Master - ${clusterContext.master.getPublicAddresses} / ${clusterContext.master.getPrivateAddresses}")
+          clusterContext.slaves.foreach(slave => LOG.info(s"Started slave - ${slave.getPublicAddresses} / ${slave.getPrivateAddresses}"))
+          store.save(runningCluster)
+          LOG.info(s"Cluster ${clusterSpec.name} has been created in ${DurationFormatUtils.formatDurationHMS(watch.getTime)}")
+        } catch {
+          case e: Exception =>
+            LOG.error(e.getMessage, e)
+            store.save(initializingCluster.copy(status = Failed, context = None))
+        }
 
       case Upscale(clusterId, factor) =>
         LOG.info(s"Starting to upscale the cluster=$clusterId with $factor nodes")
@@ -36,8 +42,15 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
           cluster <- clusterOption;
           context <- cluster.context
         ) {
-          ClusterProvisioner.upScale(cluster.spec, context, factor)
-          watch.stop()
+          try {
+            val newContext = ClusterProvisioner.upScale(cluster.spec, context, factor)
+            store.save(cluster.copy(context = Some(newContext)))
+            watch.stop()
+          } catch {
+            case e: Exception =>
+              LOG.error(e.getMessage, e)
+              store.save(cluster.copy(status = Failed, context = None))
+          }
           LOG.info(s"Upscaled the ${cluster.spec.name} by $factor nodes in ${DurationFormatUtils.formatDurationHMS(watch.getTime)}")
         }
 
@@ -50,8 +63,15 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
           cluster <- clusterOption;
           context <- cluster.context
         ) {
-          ClusterProvisioner.downScale(cluster.spec, context, factor)
-          LOG.info(s"Downscaled the ${cluster.spec.name} by $factor nodes in ${DurationFormatUtils.formatDurationHMS(watch.getTime)}")
+          try {
+            val newContext = ClusterProvisioner.downScale(cluster.spec, context, factor)
+            store.save(cluster.copy(context = Some(newContext)))
+            LOG.info(s"Downscaled the ${cluster.spec.name} by $factor nodes in ${DurationFormatUtils.formatDurationHMS(watch.getTime)}")
+          } catch {
+            case e: Exception =>
+              LOG.error(e.getMessage, e)
+              store.save(cluster.copy(status = Failed, context = None))
+          }
         }
 
       case Teardown(clusterId) =>
@@ -62,8 +82,16 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
           cluster <- clusterOption;
           context <- cluster.context
         ) {
-          ClusterProvisioner.tearDown(cluster.spec, context)
-          LOG.info(s"Cluster ${cluster.spec.name} has been terminated in ${DurationFormatUtils.formatDurationHMS(watch.getTime)}")
+          try {
+            store.save(cluster.copy(status = Terminating))
+            ClusterProvisioner.tearDown(cluster.spec, context)
+            store.save(cluster.copy(status = NotRunning, context = None))
+            LOG.info(s"Cluster ${cluster.spec.name} has been terminated in ${DurationFormatUtils.formatDurationHMS(watch.getTime)}")
+          } catch {
+            case e: Exception =>
+              LOG.error(e.getMessage, e)
+              store.save(cluster.copy(status = Failed, context = None))
+          }
         }
     }
   }
