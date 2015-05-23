@@ -22,4 +22,4 @@ case class AWSHardwareConfig(accessKeyId: String, secretKeyId: String,
   override def credentials: Credentials = Credentials(accessKeyId, secretKeyId)
 }
 
-case class RunningCluster(id: Long, clusterSpec: ClusterSpec, status: ClusterStatus, context: Option[ClusterContext] = None)
+case class RunningCluster(id: Long, spec: ClusterSpec, status: ClusterStatus, context: Option[ClusterContext] = None)

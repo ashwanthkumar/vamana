@@ -19,7 +19,7 @@ case class AWSProvisioner(computeService: ComputeService) {
     computeService.createNodesInGroup(clusterName, numInstances, template).asScala
   }
 
-  def removeNodes(instanceIds: List[String]): Set[NodeMetadata] = computeService.destroyNodesMatching(new Predicate[NodeMetadata] {
+  def removeNodes(instanceIds: List[String]): Set[NodeMetadata] = computeService.suspendNodesMatching(new Predicate[NodeMetadata] {
     override def apply(t: NodeMetadata): Boolean = instanceIds contains t.getId
   }).asScala.toSet
   

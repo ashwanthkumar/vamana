@@ -5,12 +5,14 @@ import hackday.vamana.provisioner.ClusterProvisioner
 import hackday.vamana.util.VamanaLogger
 
 class EventExecutor(event: Event, store: ClusterStore) extends Runnable with VamanaLogger {
+
   import hackday.vamana.models.Events._
+
   override def run(): Unit = {
-    println(s"I'm executing $event")
     event match {
       case Create(spec) =>
         val uniqueClusterId = store.nextId
+        LOG.info(s"Starting to create cluster with ")
         val clusterSpec = ClusterSpec.fromSpec(spec ++ Map("id" -> uniqueClusterId.toString))
         val clusterContext = ClusterProvisioner.create(clusterSpec)
         val runningCluster = RunningCluster(uniqueClusterId, clusterSpec, Running, Some(clusterContext))
@@ -19,6 +21,26 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
         LOG.info("Slaves - ")
         clusterContext.slaves.foreach(slave => LOG.info(s"Started slave - ${slave.getPublicAddresses} / ${slave.getPrivateAddresses}"))
         store.save(runningCluster)
+
+      case Upscale(clusterId, factor) =>
+        val clusterOption = store.get(clusterId)
+        for (
+          cluster <- clusterOption;
+          context <- cluster.context
+        ) {
+          ClusterProvisioner.upScale(cluster.spec, context, factor)
+          LOG.info(s"Upscaled the ${cluster.spec.name} by $factor nodes")
+        }
+
+      case Downscale(clusterId, factor) =>
+        val clusterOption = store.get(clusterId)
+        for (
+          cluster <- clusterOption;
+          context <- cluster.context
+        ) {
+          ClusterProvisioner.downScale(cluster.spec, context, factor)
+          LOG.info(s"Downscaled the ${cluster.spec.name} by $factor nodes")
+        }
     }
   }
 }
