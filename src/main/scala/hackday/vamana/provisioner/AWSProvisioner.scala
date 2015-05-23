@@ -28,7 +28,7 @@ case class AWSProvisioner(computeService: ComputeService) {
 
 
 trait Provisioner {
-  def create(cluster: Cluster)
+  def create(cluster: Cluster) : ClusterContext
   def tearDown(cluster: Cluster)
 }
 
@@ -75,7 +75,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
   override def create(cluster: Cluster) = {
     val hwConfig = cluster.template.hwConfig
     // All nodes that belong to a particular
-    // cluster would have the cluster name tag set.
+    // cluster would have the cluster name as tag.
     // This would help querying if need be.
     val tags = List(cluster.name)
     val options = TemplateOptions.Builder
@@ -92,7 +92,6 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
         1,
         templateFrom(provisioner.computeService)(hwConfig, Some(masterOptions))
       ).head
-
     LOG.info(s"Master running at => ${master.getHostname}")
 
     val slaves = provisionerFor(cluster)
@@ -100,14 +99,14 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with PrivateKey 
         cluster.name,
         cluster.template.appConfig.minNodes,
         templateFrom(provisioner.computeService)(hwConfig, Some(slaveOptions)))
+
     LOG.info(s"Slaves running at => ${slaves.map(_.getHostname).mkString("\n")}")
-    LOG.info("TODO: Report an appropriate status!")
 
     ClusterContext(master, slaves.toSet)
   }
 
   override def tearDown(cluster: Cluster): Unit = {
-    
+
     LOG.info("Build teardown")
   }
 }

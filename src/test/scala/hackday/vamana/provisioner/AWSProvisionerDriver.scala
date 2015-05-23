@@ -12,6 +12,6 @@ object AWSProvisionerDriver {
       HadoopTemplate(Map[String,String](), 2, 3),
       AWSHardwareConfig(accessKey, secretKey, "", "m3.xlarge")
     ), NotRunning)
-    ClusterProvisioner.create(hadoopCluster)
+    val clusterContext = ClusterProvisioner.create(hadoopCluster)
   }
 }
