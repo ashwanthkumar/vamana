@@ -25,7 +25,7 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
       store.save(runningCluster)
       LOG.info(s"Cluster ${clusterSpec.name} has been created in ${DurationFormatUtils.formatDurationHMS(watch.getTime)}")
 
-      val appContext = clusterSpec.appTemplate.context(runningCluster)
+      val appContext = clusterSpec.appTemplate.context(runningCluster, store)
 
       val bootstrapAction = appContext.lifeCycle.bootstrap()
       ClusterProvisioner.bootstrap(clusterSpec, clusterContext, bootstrapAction)
