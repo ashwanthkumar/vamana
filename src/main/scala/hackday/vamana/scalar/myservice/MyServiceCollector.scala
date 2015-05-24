@@ -24,7 +24,9 @@ class MyServiceCollector(cluster: RunningCluster, clusterStore: ClusterStore) ex
       val nodeAddr = node.getPublicAddresses.asScala.filter(addr => addr != "localhost" || addr != "127.0.0.1").head
       val url = s"http://$nodeAddr:8080/status"
       Unirest.setTimeouts(30 * 1000, 30 * 1000)
+      LOG.info(s"Fetching app metrics from $url")
       val response = Unirest.get(url).asString()
+      LOG.info(s"Response from $url => ${response.getBody}")
       val appMetric = JsonUtils.fromJsonAsMap(response.getBody)
       MyServiceDemand(appMetric("requests").toInt)
     }catch{case e: Exception =>

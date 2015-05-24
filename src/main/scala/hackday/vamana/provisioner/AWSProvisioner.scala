@@ -89,6 +89,8 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
       .modules(Iterable(LoggingModules.firstOrJDKLoggingModule(),new SshjSshClientModule()).asJava)
       .buildView(classOf[ComputeServiceContext]).getComputeService)
   }
+
+  def publicAddressFrom(nodeMetadata: NodeMetadata) = nodeMetadata.getPublicAddresses.asScala.filter(addr => !addr.equals("localhost") && !addr.equals("127.0.0.1")).head
   
   def templateOptions(name: String)(asMaster: Boolean) = {
     val options = new TemplateOptions()
@@ -157,7 +159,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
     val provisioner = provisionerFor(cluster)
     val nodeIds = clusterCtx.allNodeIds
     val nodeStatus = provisioner.removeNodes(nodeIds)
-    LOG.info("Cluster termination completed...")
+    LOG.info(s"Cluster ${cluster.name} termination completed.")
     LOG.info(nodeStatus.map(n => s"${n.getHostname} : ${n.getStatus}").mkString("\n"))
   }
 
@@ -172,7 +174,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
         factor,
         templateFrom(provisioner.computeService)(hwConfig, Some(slaveOptions)))
     LOG.info(s"[UPSCALE] Following new slaves have been added ")
-    LOG.info(s"${newSlaves.map(_.getHostname).mkString("\n")}")
+    LOG.info(s"${newSlaves.map(_.getPublicAddresses).mkString("[UPSCALE]","\n", "")}")
     clusterCtx.copy(slaves = clusterCtx.slaves ++ newSlaves.toSet)
   }
 
@@ -180,8 +182,9 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
     val provisioner = provisionerFor(cluster)
     val removedSlaves = provisioner.removeNodes(clusterCtx.slaves.take(factor).map(_.getId).toList)
     LOG.info(s"[DOWNSCALE] Following have been removed ")
-    LOG.info(s"${removedSlaves.map(_.getHostname).mkString("\n")}")
-    clusterCtx.copy(slaves = clusterCtx.slaves diff removedSlaves.toSet)
+    LOG.info(s"${removedSlaves.map(_.getPublicAddresses).mkString("[DOWNSCALE] ","\n", "")}")
+    val removedHosts = removedSlaves.map(_.getHostname)
+    clusterCtx.copy(slaves = clusterCtx.slaves.filterNot(s => removedHosts contains s.getHostname))
   }
 
   override def runScriptOn(cluster: ClusterSpec, clusterCtx: ClusterContext, script: String) = {
