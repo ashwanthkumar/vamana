@@ -20,6 +20,7 @@ import org.jclouds.sshj.config.SshjSshClientModule
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import org.jclouds.ec2.compute.EC2ComputeServiceContext
+import hackday.vamana.scalar.Scalar
 
 
 // TODO: Revisit, if this 'specialization' is needed
@@ -58,7 +59,7 @@ case class AWSProvisioner(computeService: ComputeService) {
 trait Provisioner {
   def create(cluster: ClusterSpec) : ClusterContext
   def upScale(cluster: ClusterSpec, clusterCtx: ClusterContext, factor: Int) : ClusterContext
-  def downScale(cluster: ClusterSpec, clusterCtx: ClusterContext, factor: Int) : ClusterContext
+  def downScale(cluster: ClusterSpec, clusterCtx: ClusterContext, scalar: Scalar, factor: Int) : ClusterContext
   def tearDown(cluster: ClusterSpec, clusterCtx: ClusterContext)
   def runScriptOn(cluster: ClusterSpec, clusterCtx: ClusterContext, script: String) : Iterable[ExecResponse]
   def bootstrap(cluster: ClusterSpec, clusterCtx: ClusterContext, btstrap: Bootstrap)
@@ -178,9 +179,9 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
     clusterCtx.copy(slaves = clusterCtx.slaves ++ newSlaves.toSet)
   }
 
-  override def downScale(cluster: ClusterSpec, clusterCtx: ClusterContext, factor: Int): ClusterContext = {
+  override def downScale(cluster: ClusterSpec, clusterCtx: ClusterContext, scalar: Scalar, factor: Int): ClusterContext = {
     val provisioner = provisionerFor(cluster)
-    val removedSlaves = provisioner.removeNodes(clusterCtx.slaves.take(factor).map(_.getId).toList)
+    val removedSlaves = provisioner.removeNodes(scalar.downscaleCandidates(factor))
     LOG.info(s"[DOWNSCALE] Following have been removed ")
     LOG.info(s"${removedSlaves.map(_.getPublicAddresses).mkString("[DOWNSCALE] ","\n", "")}")
     val removedHosts = removedSlaves.map(_.getHostname)

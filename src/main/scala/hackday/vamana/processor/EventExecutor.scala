@@ -83,7 +83,8 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
         ) {
           store.save(cluster.copy(status = Downscaling))
           try {
-            val newContext = ClusterProvisioner.downScale(cluster.spec, context, factor)
+            val appContext = cluster.spec.appTemplate.context(cluster, store)
+            val newContext = ClusterProvisioner.downScale(cluster.spec, context, appContext.scalar, factor)
             store.save(cluster.copy(context = Some(newContext), status = Running))
             LOG.info(s"Downscaled the ${cluster.spec.name} by $factor nodes in ${DurationFormatUtils.formatDurationHMS(watch.getTime)}")
           } catch {
