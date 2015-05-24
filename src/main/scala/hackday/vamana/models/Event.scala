@@ -14,9 +14,13 @@ object Events {
 
   case class Teardown(id: Long) extends Event
 
-  case class Upscale(id: Long, number: Int) extends Event
+  case class Upscale(id: Long, number: Int) extends Event {
+    override def toString: String = s"Upscaling for clusterWithId=$id by $number nodes"
+  }
 
-  case class Downscale(id: Long, number: Int) extends Event
+  case class Downscale(id: Long, number: Int) extends Event {
+    override def toString: String = s"Downscaling for clusterWithId=$id by $number nodes"
+  }
 
   case object DoNothing extends Event
 
