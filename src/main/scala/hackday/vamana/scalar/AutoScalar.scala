@@ -1,5 +1,6 @@
 package hackday.vamana.scalar
 
+import hackday.vamana.models.ClusterStore
 import hackday.vamana.models.Events.{DoNothing, Downscale, Upscale}
 import hackday.vamana.processor.RequestProcessor
 import hackday.vamana.util.VamanaLogger
@@ -10,7 +11,7 @@ object AutoScaleConfig {
   def apply(): AutoScaleConfig = AutoScaleConfig(1000, 100.0, 25.0)
 }
 
-class AutoScalar(appScalar: Scalar, config: AutoScaleConfig, metricsStore: MetricStore, clusterId: Long) extends Runnable with VamanaLogger {
+class AutoScalar(appScalar: Scalar, config: AutoScaleConfig, metricsStore: MetricStore, clusterId: Long, clusterStore: ClusterStore) extends Runnable with VamanaLogger {
   var lastCheckTime: Long = 0
 
   override def run(): Unit = {
@@ -21,6 +22,7 @@ class AutoScalar(appScalar: Scalar, config: AutoScaleConfig, metricsStore: Metri
       stats match {
         case latest :: rest =>
           val scaleUnit = appScalar.scaleUnit(latest)
+          // TODO - Need to take clusterContext from clusterStore and check if we've already reached the limit on the number of nodes
           RequestProcessor.processEvent(createScaleEvent(scaleUnit.numberOfNodes))
         case Nil =>
           LOG.warn(s"$clusterId has no metrics collected yet")

@@ -33,7 +33,7 @@ object RequestProcessor {
 
   def startAutoScalar(clusterId: Long, appScalar: Scalar) = {
     val config = AutoScaleConfig() // FIXME - this should ideally come from clusterSpec
-    val future = autoScalar.scheduleAtFixedRate(new AutoScalar(appScalar, config, metricsStore, clusterId), config.hustlePeriod, config.hustlePeriod, TimeUnit.MILLISECONDS)
+    val future = autoScalar.scheduleAtFixedRate(new AutoScalar(appScalar, config, metricsStore, clusterId, clusterStore), config.hustlePeriod, config.hustlePeriod, TimeUnit.MILLISECONDS)
     autoScalarsInProgress.put(clusterId, future)
   }
 

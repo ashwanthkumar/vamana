@@ -26,11 +26,15 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
       LOG.info(s"Cluster ${clusterSpec.name} has been created in ${DurationFormatUtils.formatDurationHMS(watch.getTime)}")
 
       val appContext = clusterSpec.appTemplate.context(runningCluster)
-      //          LOG.info(s"Registering collector for ${clusterSpec.name}")
-      //          RequestProcessor.startCollector(runningCluster, appContext.collector)
 
       val bootstrapAction = appContext.lifeCycle.bootstrap()
       ClusterProvisioner.bootstrap(clusterSpec, clusterContext, bootstrapAction)
+
+      LOG.info(s"Registering collector for ${clusterSpec.name}")
+      RequestProcessor.startCollector(runningCluster, appContext.collector)
+
+      LOG.info(s"Registering AutoScaling for ${clusterSpec.name}")
+      RequestProcessor.startAutoScalar(runningCluster.id, appContext.scalar)
 
     } catch {
       case e: Exception =>
@@ -97,6 +101,11 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
           try {
             LOG.info(s"Stopping stats collector for ${cluster.spec.name}")
             RequestProcessor.stopCollector(cluster.id)
+            LOG.info(s"Stats collector has stopped for ${cluster.spec.name}")
+
+            LOG.info(s"Stopping AutoScaling for ${cluster.spec.name}")
+            RequestProcessor.stopAutoScalar(cluster.id)
+            LOG.info(s"AutoScaling hast stopped for ${cluster.spec.name}")
 
             store.save(cluster.copy(status = Terminating))
             ClusterProvisioner.tearDown(cluster.spec, context)
