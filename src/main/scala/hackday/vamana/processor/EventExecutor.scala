@@ -95,6 +95,26 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
           }
         }
 
+      case Stop(clusterId) =>
+        val watch = new StopWatch
+        watch.start()
+        val clusterOption = store.get(clusterId)
+        for(
+          cluster <- clusterOption;
+          context <- cluster.context
+        ){
+          LOG.info(s"Stopping stats collector for ${cluster.spec.name}")
+          RequestProcessor.stopCollector(cluster.id)
+          LOG.info(s"Stats collector has stopped for ${cluster.spec.name}")
+
+          LOG.info(s"Stopping AutoScaling for ${cluster.spec.name}")
+          RequestProcessor.stopAutoScalar(cluster.id)
+          LOG.info(s"AutoScaling hast stopped for ${cluster.spec.name}")
+
+          store.save(cluster.copy(status = Stopping))
+          ClusterProvisioner
+        }
+
       case Teardown(clusterId) =>
         val watch = new StopWatch
         watch.start()
