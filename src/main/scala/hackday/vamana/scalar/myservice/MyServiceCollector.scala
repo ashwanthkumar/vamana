@@ -18,7 +18,7 @@ case class MyServiceSupply(available: Int) extends Supply
 
 
 class MyServiceCollector(cluster: RunningCluster, clusterStore: ClusterStore) extends Collector with VamanaLogger with Clock {
-  val perNodeSupply = 100
+  val perNodeSupply = 50
   def stats(node: NodeMetadata) = {
     try {
       val nodeAddr = node.getPublicAddresses.asScala.filter(addr => addr != "localhost" || addr != "127.0.0.1").head

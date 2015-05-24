@@ -24,7 +24,7 @@ import hackday.vamana.scalar.Scalar
 
 
 // TODO: Revisit, if this 'specialization' is needed
-case class AWSProvisioner(computeService: ComputeService) {
+case class AWSProvisioner(computeService: ComputeService) extends VamanaLogger {
   def nodeMatcher(instanceIds: List[String]) = new Predicate[NodeMetadata] {
     override def apply(t: NodeMetadata): Boolean = instanceIds contains t.getId
   }
@@ -41,8 +41,15 @@ case class AWSProvisioner(computeService: ComputeService) {
 
   def pushFileTo(nodes: List[NodeMetadata], src: String, dest: String) = {
     val sshClientForNode = computeService.getContext.utils().sshForNode()
-    nodes.par.foreach{ node =>
-      sshClientForNode.apply(node).put(dest, Payloads.newFilePayload(new File(src)))
+    nodes.foreach{ node =>
+      LOG.info(s"Copying $src to $dest on ${node.getPublicAddresses}")
+      val client = sshClientForNode.apply(node)
+      try {
+        client.connect()
+        client.put(dest, Payloads.newFilePayload(new File(src)))
+      } finally {
+        client.disconnect()
+      }
     }
   }
 
@@ -52,6 +59,7 @@ case class AWSProvisioner(computeService: ComputeService) {
       .overrideLoginPrivateKey(withPrivateKey)
       .runAsRoot(false)
     nodes.map(node => {
+      LOG.info(s"Executing script on $node")
       node -> computeService.runScriptOnNode(node, script, runScriptOptions)
     }).toMap
   }
@@ -179,8 +187,10 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
         templateFrom(provisioner.computeService)(hwConfig, Some(slaveOptions))).toSet
     LOG.info(s"[UPSCALE] Following new slaves have been added ")
     LOG.info(s"${newSlaves.map(_.getPublicAddresses).mkString("[UPSCALE]","\n", "")}")
-    bootstrap(cluster.spec, cluster.context.get, appContext.lifeCycle.bootstrap())
-    cluster.addNodes(newSlaves)
+    Thread.sleep(60 * 1000)
+    val newCluster = cluster.addNodes(newSlaves)
+    bootstrap(newCluster.spec, newCluster.context.get, appContext.lifeCycle.bootstrap())
+    newCluster
   }
 
   override def downScale(cluster: ClusterSpec, clusterCtx: ClusterContext, scalar: Scalar, factor: Int): ClusterContext = {
@@ -206,7 +216,6 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
     LOG.info(s"[BOOTSTRAP] Bootstrapping ${cluster.name}")
     val provisioner = provisionerFor(cluster)
     bootstrapAction.copyActions.foreach{ copy =>
-      LOG.info(s"Copying ${copy.src} to ${copy.dst}")
       provisioner.pushFileTo(clusterCtx.all, copy.src, copy.dst)
     }
 
