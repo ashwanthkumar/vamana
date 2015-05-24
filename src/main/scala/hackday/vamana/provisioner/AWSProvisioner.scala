@@ -171,12 +171,16 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
         cluster.name,
         factor,
         templateFrom(provisioner.computeService)(hwConfig, Some(slaveOptions)))
+    LOG.info(s"[UPSCALE] Following new slaves have been added ")
+    LOG.info(s"${newSlaves.map(_.getHostname).mkString("\n")}")
     clusterCtx.copy(slaves = clusterCtx.slaves ++ newSlaves.toSet)
   }
 
   override def downScale(cluster: ClusterSpec, clusterCtx: ClusterContext, factor: Int): ClusterContext = {
     val provisioner = provisionerFor(cluster)
     val removedSlaves = provisioner.removeNodes(clusterCtx.slaves.take(factor).map(_.getId).toList)
+    LOG.info(s"[DOWNSCALE] Following have been removed ")
+    LOG.info(s"${removedSlaves.map(_.getHostname).mkString("\n")}")
     clusterCtx.copy(slaves = clusterCtx.slaves diff removedSlaves.toSet)
   }
 

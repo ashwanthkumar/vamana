@@ -12,16 +12,16 @@ case class ClusterContext(master: NodeMetadata, slaves: Set[NodeMetadata]) {
 }
 
 case class HadoopTemplate(props: Map[String, String], minNodes: Int, maxNodes: Int) extends AppTemplate {
-  override def context(cluster: RunningCluster): AppContext = AppContext(
-    new HadoopMetricsCollector(cluster),
+  override def context(cluster: RunningCluster, clusterStore: ClusterStore): AppContext = AppContext(
+    new HadoopMetricsCollector(cluster, clusterStore),
     new HadoopScalar(cluster),
     HadoopLifeCycle(cluster.context.get, props)
   )
 }
 
 case class MyServiceTemplate(props: Map[String, String], minNodes: Int, maxNodes: Int) extends AppTemplate {
-  override def context(cluster: RunningCluster): AppContext = AppContext(
-    new MyServiceCollector(cluster),
+  override def context(cluster: RunningCluster, clusterStore: ClusterStore): AppContext = AppContext(
+    new MyServiceCollector(cluster, clusterStore),
     new MyServiceScalar(cluster),
     MyServiceLifeCycle(cluster.context.get)
   )

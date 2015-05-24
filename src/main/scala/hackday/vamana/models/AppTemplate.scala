@@ -29,5 +29,5 @@ trait AppTemplate {
 
   def minNodes: Int
 
-  def context(cluster: RunningCluster): AppContext
+  def context(cluster: RunningCluster, clusterStore: ClusterStore): AppContext
 }

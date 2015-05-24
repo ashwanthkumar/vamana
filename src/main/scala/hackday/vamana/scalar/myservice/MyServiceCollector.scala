@@ -1,7 +1,7 @@
 package hackday.vamana.scalar.myservice
 
 import hackday.vamana.scalar.{Supply, Demand, ResourceStat, Collector}
-import hackday.vamana.models.RunningCluster
+import hackday.vamana.models.{ClusterStore, RunningCluster}
 import org.apache.commons.httpclient.HttpClient
 import com.mashape.unirest.http.Unirest
 import scala.collection.JavaConverters._
@@ -17,7 +17,7 @@ case class MyServiceDemand(quantity: Int) extends Demand {
 case class MyServiceSupply(available: Int) extends Supply
 
 
-class MyServiceCollector(cluster: RunningCluster) extends Collector with VamanaLogger with Clock {
+class MyServiceCollector(cluster: RunningCluster, clusterStore: ClusterStore) extends Collector with VamanaLogger with Clock {
   val perNodeSupply = 100
   def stats(node: NodeMetadata) = {
     try {
@@ -35,7 +35,8 @@ class MyServiceCollector(cluster: RunningCluster) extends Collector with VamanaL
   }
 
   override def getStats: ResourceStat = {
-    val nodes = cluster.context.fold(List[NodeMetadata]()){ ctx => ctx.master :: ctx.slaves.toList }
+    val updatedCluster = clusterStore.get(cluster.id)
+    val nodes = updatedCluster.flatMap(_.context).fold(List[NodeMetadata]()){ ctx => ctx.master :: ctx.slaves.toList }
     val totalDemand = nodes.map(stats).reduce(_ + _)
     val totalSupply = MyServiceSupply(perNodeSupply * nodes.size)
     ResourceStat(totalDemand, totalSupply, NOW)
