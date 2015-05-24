@@ -7,7 +7,7 @@ import hackday.vamana.util.VamanaLogger
 case class AutoScaleConfig(hustlePeriod: Long, upscaleBurstRate: Double, downscaleBurstRate: Double)
 
 object AutoScaleConfig {
-  def apply() = AutoScaleConfig(1000, 100.0, 25.0)
+  def apply(): AutoScaleConfig = AutoScaleConfig(1000, 100.0, 25.0)
 }
 
 class AutoScalar(appScalar: Scalar, config: AutoScaleConfig, metricsStore: MetricStore, clusterId: Long) extends Runnable with VamanaLogger {
