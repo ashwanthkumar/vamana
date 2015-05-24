@@ -11,7 +11,7 @@ class MyServiceHandler(BaseHTTPRequestHandler):
         if parsed_path.path == "/status":
         	self.send_response(200)
 	        self.end_headers()
-	        requests = random.randint(0, 1000)
+	        requests = random.randint(0, 150)
 	        self.wfile.write("{\"requests\": \""+str(requests)+"\"}")
 	        return
         else:
