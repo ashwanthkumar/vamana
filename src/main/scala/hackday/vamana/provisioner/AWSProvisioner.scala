@@ -134,7 +134,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
     val hwConfig = cluster.hwConfig
     val masterOptions = templateOptions(cluster.name)(true)
     val slaveOptions = templateOptions(cluster.name)(false)
-
+    LOG.info(s"[INIT] Creating cluster ${cluster.name}")
     val provisioner = provisionerFor(cluster)
     val master = provisioner.addNodes(hwConfig,
         cluster.name,
@@ -156,7 +156,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
   }
 
   override def tearDown(cluster: ClusterSpec, clusterCtx: ClusterContext): Unit = {
-    LOG.info(s"Tearing down ${cluster.name}")
+    LOG.info(s"[SHUTDOWN] Tearing down ${cluster.name}")
     val provisioner = provisionerFor(cluster)
     val nodeIds = clusterCtx.allNodeIds
     val nodeStatus = provisioner.removeNodes(nodeIds)
@@ -174,7 +174,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
         cluster.name,
         factor,
         templateFrom(provisioner.computeService)(hwConfig, Some(slaveOptions)))
-    LOG.info(s"[UPSCALE] Following new slaves have been added ")
+    LOG.info(s"[UPSCALE] Following new slaves have been added to ${cluster.name}")
     LOG.info(s"${newSlaves.map(_.getPublicAddresses).mkString("[UPSCALE]","\n", "")}")
     clusterCtx.copy(slaves = clusterCtx.slaves ++ newSlaves.toSet)
   }
@@ -182,7 +182,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
   override def downScale(cluster: ClusterSpec, clusterCtx: ClusterContext, scalar: Scalar, factor: Int): ClusterContext = {
     val provisioner = provisionerFor(cluster)
     val removedSlaves = provisioner.removeNodes(scalar.downscaleCandidates(factor))
-    LOG.info(s"[DOWNSCALE] Following have been removed ")
+    LOG.info(s"[DOWNSCALE] Following have been removed in ${cluster.name}")
     LOG.info(s"${removedSlaves.map(_.getPublicAddresses).mkString("[DOWNSCALE] ","\n", "")}")
     val removedHosts = removedSlaves.map(_.getHostname)
     clusterCtx.copy(slaves = clusterCtx.slaves.filterNot(s => removedHosts contains s.getHostname))
@@ -191,6 +191,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
   override def runScriptOn(cluster: ClusterSpec, clusterCtx: ClusterContext, script: String) = {
     val provisioner = provisionerFor(cluster)
     val results = provisioner.runScriptOn(clusterCtx.allNodeIds, script, user, privateKeyWithFallback)
+    LOG.info(s"[RUN_SCRIPT] Executing script $script on ${cluster.name}")
     results.map { case (node, response) =>
       LOG.info(s"Command completed on $node with return code: ${response.getExitStatus}")
       response
@@ -198,6 +199,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
   }
 
   override def bootstrap(cluster: ClusterSpec, clusterCtx: ClusterContext, bootstrapAction: Bootstrap): Unit = {
+    LOG.info(s"[BOOTSTRAP] Bootstrapping ${cluster.name}")
     val provisioner = provisionerFor(cluster)
     bootstrapAction.copyActions.foreach{ copy =>
       LOG.info(s"Copying ${copy.src} to ${copy.dst}")
