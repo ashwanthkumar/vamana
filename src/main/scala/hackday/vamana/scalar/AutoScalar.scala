@@ -1,6 +1,6 @@
 package hackday.vamana.scalar
 
-import hackday.vamana.models.ClusterStore
+import hackday.vamana.models.{Running, ClusterStore}
 import hackday.vamana.models.Events.{DoNothing, Downscale, Upscale}
 import hackday.vamana.processor.RequestProcessor
 import hackday.vamana.util.VamanaLogger
@@ -27,6 +27,7 @@ class AutoScalar(appScalar: Scalar, config: AutoScaleConfig, metricsStore: Metri
             cluster <- clusterStore.get(clusterId)
             if cluster.isNotInFullCapacity
             if cluster.runningNodes < cluster.maxNodes
+            if cluster.status == Running
           ) yield RequestProcessor.processEvent(createScaleEvent(scaleUnit.numberOfNodes, cluster.maxNodes, cluster.minNodes, cluster.runningNodes))
 
         case Nil =>
