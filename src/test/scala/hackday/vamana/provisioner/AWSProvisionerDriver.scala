@@ -48,7 +48,6 @@ object AWSProvisionerDriver {
       Thread.sleep(30)
     }
 
-
     println("Triggering cluster shutdown...")
     ClusterProvisioner.tearDown(myServiceClusterSpec, clusterContext)
 
