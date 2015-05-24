@@ -32,8 +32,7 @@ case class AWSHardwareConfig(accessKeyId: String, secretKeyId: String,
                              spotPrice: Option[Double] = None) extends HardwareConfig {
   // TODO: FILL THIS MAPPING
   val machineTypeToAmiMapping = Map[String, String](
-    "t2.small" -> "us-west-2/ami-5189a661",
-    "t2.micro" -> "us-east-1/ami-de57dcb6"
+    "t2.small" -> "us-east-1/ami-de57dcb6"
   )
   val defaultAmiId = "us-east-1/ami-de57dcb6" // wont be available unless you use ix IAM creds
 
