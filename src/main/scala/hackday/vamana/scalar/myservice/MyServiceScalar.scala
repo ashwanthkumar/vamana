@@ -9,7 +9,11 @@ class MyServiceScalar(cluster: RunningCluster) extends Scalar(cluster) with Vama
 
   override def downscaleCandidates(number: Int): List[String] = {
     cluster.context match {
-      case Some(ctx) => cluster.context.fold(List[String]())(_.slaves.take(number).map(_.getId).toList)
+      case Some(ctx) =>
+        val nodes = cluster.context.fold(List[String]())(_.slaves.take(number).map(_.getId).toList)
+        LOG.info("Selecting the following nodes for Downscaling")
+        LOG.info(nodes.mkString("\n"))
+        nodes
       case None => LOG.warn(s"No cluster context available for this cluster: ${cluster.spec.name}. Nothing to downscale."); List[String]()
     }
   }
