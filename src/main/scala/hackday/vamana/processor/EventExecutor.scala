@@ -112,7 +112,9 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
           LOG.info(s"AutoScaling hast stopped for ${cluster.spec.name}")
 
           store.save(cluster.copy(status = Stopping))
-          ClusterProvisioner
+          ClusterProvisioner.stop(cluster.spec, context)
+          store.save(cluster.copy(status = NotRunning, context = None))
+          LOG.info(s"Cluster ${cluster.spec.name} has been stopped in ${DurationFormatUtils.formatDurationHMS(watch.getTime)}")
         }
 
       case Teardown(clusterId) =>

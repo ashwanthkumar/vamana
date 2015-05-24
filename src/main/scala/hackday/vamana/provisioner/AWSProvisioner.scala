@@ -33,8 +33,10 @@ case class AWSProvisioner(computeService: ComputeService) {
     computeService.createNodesInGroup(clusterName, numInstances, template).asScala
   }
 
-  def removeNodes(instanceIds: List[String]): Set[NodeMetadata] = computeService.suspendNodesMatching(nodeMatcher(instanceIds)).asScala.toSet
-  
+  def stopNodes(instanceIds: List[String]): Set[NodeMetadata] = computeService.suspendNodesMatching(nodeMatcher(instanceIds)).asScala.toSet
+
+  def removeNodes(instanceIds: List[String]): Set[NodeMetadata] = computeService.destroyNodesMatching(nodeMatcher(instanceIds)).asScala.toSet
+
   def status(instanceId: String): Unit = computeService.getNodeMetadata(instanceId).getStatus
 
   def pushFileTo(nodes: List[NodeMetadata], src: String, dest: String) = {
@@ -60,6 +62,7 @@ trait Provisioner {
   def create(cluster: ClusterSpec) : ClusterContext
   def upScale(cluster: RunningCluster, appContext: AppContext, factor: Int) : RunningCluster
   def downScale(cluster: ClusterSpec, clusterCtx: ClusterContext, scalar: Scalar, factor: Int) : ClusterContext
+  def stop(cluster: ClusterSpec, clusterCtx: ClusterContext)
   def tearDown(cluster: ClusterSpec, clusterCtx: ClusterContext)
   def runScriptOn(cluster: ClusterSpec, clusterCtx: ClusterContext, script: String) : Iterable[ExecResponse]
   def bootstrap(cluster: ClusterSpec, clusterCtx: ClusterContext, btstrap: Bootstrap)
@@ -156,7 +159,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
   }
 
   override def tearDown(cluster: ClusterSpec, clusterCtx: ClusterContext): Unit = {
-    LOG.info(s"[SHUTDOWN] Tearing down ${cluster.name}")
+    LOG.info(s"[TEARDOWN] Tearing down ${cluster.name}")
     val provisioner = provisionerFor(cluster)
     val nodeIds = clusterCtx.allNodeIds
     val nodeStatus = provisioner.removeNodes(nodeIds)
@@ -214,4 +217,12 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
   }
 
   override def shutdown = computeServiceCache.values.foreach(_.getContext.close())
+
+  override def stop(cluster: ClusterSpec, clusterCtx: ClusterContext): Unit = {
+    LOG.info(s"[STOP] Stopping cluster ${cluster.name}")
+    val provisioner = provisionerFor(cluster)
+    val nodeIds = clusterCtx.allNodeIds
+    val nodeStatus = provisioner.stopNodes(nodeIds)
+    LOG.info(s"Cluster ${cluster.name} stopped successfully.")
+  }
 }
