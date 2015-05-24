@@ -18,4 +18,6 @@ object Events {
 
   case class Downscale(id: Long, number: Int) extends Event
 
+  case object DoNothing extends Event
+
 }
