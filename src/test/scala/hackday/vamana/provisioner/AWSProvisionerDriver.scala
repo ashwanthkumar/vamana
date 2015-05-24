@@ -31,7 +31,7 @@ object AWSProvisionerDriver {
 
   def setupAndTeardownMyService(accessKey: String, secretKey: String) = {
     val myServiceClusterSpec = ClusterSpec("vamana-myservice-test",
-      MyServiceTemplate(Map[String, String](), 2, 3),
+      MyServiceTemplate(Map[String, String](), 1, 3),
       AWSHardwareConfig(accessKey, secretKey, "m3.xlarge")
     )
 

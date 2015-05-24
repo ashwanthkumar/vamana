@@ -99,7 +99,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
       case _ => options
     }
     val masterOrSlaveTag = if(asMaster) "master" else "slave"
-    optionsWithPrivateKey.clone().tags(List(masterOrSlaveTag, name, "vamana").asJava)
+    optionsWithPrivateKey.tags(List(masterOrSlaveTag, name, "vamana").asJava)
   }
 
 

@@ -20,12 +20,18 @@ case class MyServiceSupply(available: Int) extends Supply
 class MyServiceCollector(cluster: RunningCluster) extends Collector with VamanaLogger with Clock {
   val perNodeSupply = 100
   def stats(node: NodeMetadata) = {
-    val nodeAddr = node.getPublicAddresses.asScala.filter(addr => addr != "localhost" || addr != "127.0.0.1").head
-    val url = s"http://$nodeAddr:8080/status"
-    Unirest.setTimeouts(30*1000, 30*1000)
-    val response = Unirest.get(url).asString()
-    val appMetric = JsonUtils.fromJsonAsMap(response.getBody)
-    MyServiceDemand(appMetric("requests").toInt)
+    try {
+      val nodeAddr = node.getPublicAddresses.asScala.filter(addr => addr != "localhost" || addr != "127.0.0.1").head
+      val url = s"http://$nodeAddr:8080/status"
+      Unirest.setTimeouts(30 * 1000, 30 * 1000)
+      val response = Unirest.get(url).asString()
+      val appMetric = JsonUtils.fromJsonAsMap(response.getBody)
+      MyServiceDemand(appMetric("requests").toInt)
+    }catch{case e: Exception =>
+      LOG.warn("Error while fetching status")
+      LOG.warn(s"!${e.getMessage}")
+      MyServiceDemand(0)
+    }
   }
 
   override def getStats: ResourceStat = {

@@ -60,7 +60,7 @@ case class MyServiceLifeCycle(clusterContext: ClusterContext) extends AppLifeCyc
       Copy(mySvcPath, remoteMySVCFullPath)
     )
     val cmd = List(
-      "python /home/ec2-user/MyService.py 8080 &"
+      "nohup python /home/ec2-user/MyService.py 8080 &"
     )
 
     Bootstrap(copyActions, cmd)
