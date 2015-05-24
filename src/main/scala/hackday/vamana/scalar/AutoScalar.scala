@@ -22,12 +22,16 @@ class AutoScalar(appScalar: Scalar, config: AutoScaleConfig, metricsStore: Metri
       LOG.info(s"Checking cluster $clusterId for auto-scale")
       stats match {
         case latest :: rest =>
+          LOG.info(s"Normalized resourceStat for cluster=$clusterId is demand=${latest.demand.quantity}, supply=${latest.supply.available}")
           val scaleUnit = appScalar.scaleUnit(latest)
           for (
             cluster <- clusterStore.get(clusterId)
           ) yield {
             val event = createScaleEvent(scaleUnit.numberOfNodes, cluster.maxNodes, cluster.minNodes, cluster.runningNodes)
-            if(cluster.status == Running) RequestProcessor.processEvent(event)
+            if(cluster.status == Running) {
+              LOG.info(s"Doing $event because demand=${latest.demand}, supply=${latest.supply}")
+              RequestProcessor.processEvent(event)
+            }
             else {
               LOG.info(s"Not doing $event because cluster is in ${cluster.status} status")
             }
