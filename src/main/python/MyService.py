@@ -12,7 +12,7 @@ class MyServiceHandler(BaseHTTPRequestHandler):
         	self.send_response(200)
 	        self.end_headers()
 	        requests = random.randint(0, 1000)
-	        self.wfile.write("{\"requests\": "+str(requests)+"}")
+	        self.wfile.write("{\"requests\": \""+str(requests)+"\"}")
 	        return
         else:
 	        self.send_response(200)

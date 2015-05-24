@@ -48,7 +48,6 @@ case class AWSProvisioner(computeService: ComputeService) {
       .overrideLoginUser(asUser)
       .overrideLoginPrivateKey(withPrivateKey)
       .runAsRoot(false)
-      .wrapInInitScript(false)
     nodes.map(node => {
       node -> computeService.runScriptOnNode(node, script, runScriptOptions)
     }).toMap
