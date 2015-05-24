@@ -1,7 +1,7 @@
 package hackday.vamana.provisioner
 
 import hackday.vamana.models._
-import hackday.vamana.processor.EventExecutor
+import hackday.vamana.processor.{RequestProcessor, EventExecutor}
 import hackday.vamana.models.Events.Create
 
 object AWSProvisionerDriver {
@@ -38,7 +38,7 @@ object AWSProvisionerDriver {
     val clusterContext = ClusterProvisioner.create(myServiceClusterSpec)
     println(clusterContext)
 
-    val appContext = myServiceClusterSpec.appTemplate.context(RunningCluster(1, myServiceClusterSpec, Running, Some(clusterContext)))
+    val appContext = myServiceClusterSpec.appTemplate.context(RunningCluster(1, myServiceClusterSpec, Running, Some(clusterContext)), InMemoryClusterStore.getInstance)
 
     ClusterProvisioner.bootstrap(myServiceClusterSpec, clusterContext, appContext.lifeCycle.bootstrap())
 
