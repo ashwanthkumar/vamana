@@ -49,6 +49,7 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
       case c @ Create(spec, uniqueClusterId) =>
         val clusterSpec = ClusterSpec.fromSpec(spec)
         handleCreate(uniqueClusterId, clusterSpec)
+
       case Upscale(clusterId, factor) =>
         LOG.info(s"Starting to upscale the cluster=$clusterId with $factor nodes")
         val watch = new StopWatch

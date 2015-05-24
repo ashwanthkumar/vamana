@@ -8,7 +8,7 @@ import hackday.vamana.util.VamanaLogger
 case class AutoScaleConfig(hustlePeriod: Long, upscaleBurstRate: Double, downscaleBurstRate: Double)
 
 object AutoScaleConfig {
-  def apply(): AutoScaleConfig = AutoScaleConfig(1000, 100.0, 25.0)
+  def apply(): AutoScaleConfig = AutoScaleConfig(30 * 1000, 100.0, 25.0)
 }
 
 class AutoScalar(appScalar: Scalar, config: AutoScaleConfig, metricsStore: MetricStore, clusterId: Long, clusterStore: ClusterStore) extends Runnable with VamanaLogger {
@@ -19,6 +19,7 @@ class AutoScalar(appScalar: Scalar, config: AutoScaleConfig, metricsStore: Metri
       lastCheckTime = System.currentTimeMillis()
     } else if (System.currentTimeMillis() - lastCheckTime >= config.hustlePeriod) {
       val stats = metricsStore.get(clusterId)
+      LOG.info(s"Checking cluster $clusterId for auto-scale")
       stats match {
         case latest :: rest =>
           val scaleUnit = appScalar.scaleUnit(latest)
