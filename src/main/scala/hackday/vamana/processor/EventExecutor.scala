@@ -117,6 +117,8 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
               store.save(cluster.copy(status = Failed, context = None))
           }
         }
+
+      case DoNothing => /* do nothing */
     }
   }
 
