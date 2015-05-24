@@ -50,4 +50,9 @@ case class RunningCluster(id: Long, spec: ClusterSpec, status: ClusterStatus, co
   def runningNodes = context.map(ctx => ctx.slaves.size).getOrElse(0)
   def maxNodes = spec.appTemplate.maxNodes
   def minNodes = spec.appTemplate.minNodes
+
+  def addNodes(nodes: Set[_ <: NodeMetadata]) = {
+    val newContext = context.map(ctx => ctx.copy(slaves = ctx.slaves ++ nodes))
+    this.copy(context = newContext)
+  }
 }

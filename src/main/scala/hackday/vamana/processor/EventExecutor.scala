@@ -61,8 +61,8 @@ class EventExecutor(event: Event, store: ClusterStore) extends Runnable with Vam
         ) {
           try {
             store.save(cluster.copy(status = Upscaling))
-            val newContext = ClusterProvisioner.upScale(cluster.spec, context, factor)
-            store.save(cluster.copy(context = Some(newContext), status = Running))
+            val updatedCluster = ClusterProvisioner.upScale(cluster, factor)
+            store.save(updatedCluster.copy(status = Running))
             watch.stop()
           } catch {
             case e: Exception =>
