@@ -43,4 +43,11 @@ case class AWSHardwareConfig(accessKeyId: String, secretKeyId: String,
 
 case class RunningCluster(id: Long, spec: ClusterSpec, status: ClusterStatus, context: Option[ClusterContext] = None) {
   def master = context.map(_.master).map(_.getPublicAddresses.asScala.filter(_ != "localhost").head)
+
+  def isInFullCapacity = context.exists(ctx => spec.appTemplate.maxNodes == ctx.slaves.size)
+  def isNotInFullCapacity = !isInFullCapacity
+
+  def runningNodes = context.map(ctx => ctx.slaves.size).getOrElse(0)
+  def maxNodes = spec.appTemplate.maxNodes
+  def minNodes = spec.appTemplate.minNodes
 }

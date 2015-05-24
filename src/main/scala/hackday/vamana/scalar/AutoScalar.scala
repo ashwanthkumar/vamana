@@ -23,7 +23,12 @@ class AutoScalar(appScalar: Scalar, config: AutoScaleConfig, metricsStore: Metri
         case latest :: rest =>
           val scaleUnit = appScalar.scaleUnit(latest)
           // TODO - Need to take clusterContext from clusterStore and check if we've already reached the limit on the number of nodes
-          RequestProcessor.processEvent(createScaleEvent(scaleUnit.numberOfNodes))
+          for (
+            cluster <- clusterStore.get(clusterId)
+            if cluster.isNotInFullCapacity
+            if cluster.runningNodes < cluster.maxNodes
+          ) yield RequestProcessor.processEvent(createScaleEvent(scaleUnit.numberOfNodes, cluster.maxNodes, cluster.minNodes, cluster.runningNodes))
+
         case Nil =>
           LOG.warn(s"$clusterId has no metrics collected yet")
       }
@@ -32,9 +37,13 @@ class AutoScalar(appScalar: Scalar, config: AutoScaleConfig, metricsStore: Metri
     }
   }
 
-  def createScaleEvent(n: Int) = {
-    if(n > 0) Upscale(clusterId, n)
-    else if (n < 0) Downscale(clusterId, n)
-    else DoNothing
+  def createScaleEvent(autoScaleRequest: Int, maxNodesInCluster: Int, minNodesInCluster: Int, runningNodes: Int) = {
+    val upscalePool = maxNodesInCluster - runningNodes
+    val downscalePool = runningNodes - minNodesInCluster
+    autoScaleRequest match {
+      case upscaleRequest if upscaleRequest > 0 && upscalePool > 0 => Upscale(clusterId, math.min(upscalePool, upscaleRequest))
+      case numberOfNodes if autoScaleRequest < 0 &&  downscalePool > 0 => Downscale(clusterId, math.min(downscalePool, math.abs(autoScaleRequest)))
+      case _ => DoNothing
+    }
   }
 }
