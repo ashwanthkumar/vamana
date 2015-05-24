@@ -27,8 +27,13 @@ class AutoScalar(appScalar: Scalar, config: AutoScaleConfig, metricsStore: Metri
             cluster <- clusterStore.get(clusterId)
             if cluster.isNotInFullCapacity
             if cluster.runningNodes < cluster.maxNodes
-            if cluster.status == Running
-          ) yield RequestProcessor.processEvent(createScaleEvent(scaleUnit.numberOfNodes, cluster.maxNodes, cluster.minNodes, cluster.runningNodes))
+          ) yield {
+            val event = createScaleEvent(scaleUnit.numberOfNodes, cluster.maxNodes, cluster.minNodes, cluster.runningNodes)
+            if(cluster.status == Running) RequestProcessor.processEvent(event)
+            else {
+              LOG.info(s"Not doing $event because cluster is not yet in Running status")
+            }
+          }
 
         case Nil =>
           LOG.warn(s"$clusterId has no metrics collected yet")
