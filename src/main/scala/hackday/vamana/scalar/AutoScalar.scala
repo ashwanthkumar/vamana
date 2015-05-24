@@ -22,11 +22,8 @@ class AutoScalar(appScalar: Scalar, config: AutoScaleConfig, metricsStore: Metri
       stats match {
         case latest :: rest =>
           val scaleUnit = appScalar.scaleUnit(latest)
-          // TODO - Need to take clusterContext from clusterStore and check if we've already reached the limit on the number of nodes
           for (
             cluster <- clusterStore.get(clusterId)
-            if cluster.isNotInFullCapacity
-            if cluster.runningNodes < cluster.maxNodes
           ) yield {
             val event = createScaleEvent(scaleUnit.numberOfNodes, cluster.maxNodes, cluster.minNodes, cluster.runningNodes)
             if(cluster.status == Running) RequestProcessor.processEvent(event)
