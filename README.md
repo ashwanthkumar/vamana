@@ -4,7 +4,7 @@
 Vamana is an auto scalar that helps you scale your software or hardware based on application demand. Making Elasticity truely elastic.  
 
 ## How does it work?
-Vamana has an Autoscaling algorithm which identifies based on Demand-Supply model if a given application has to Upscale / Downscale. In order to integrate your application with Vamana it needs to implement what are called as a "Collector" and a "Scalar". 
+Vamana has an Autoscaling algorithm which identifies your application load based on a Demand-Supply model and determine if it has to Upscale / Downscale. In order to integrate your application with Vamana it needs to implement what are called as a "Collector" and a "Scalar". 
 
 ### Collector
 ```scala
