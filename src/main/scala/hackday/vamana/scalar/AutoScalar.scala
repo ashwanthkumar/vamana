@@ -29,7 +29,7 @@ class AutoScalar(appScalar: Scalar, config: AutoScaleConfig, metricsStore: Metri
             val event = createScaleEvent(scaleUnit.numberOfNodes, cluster.maxNodes, cluster.minNodes, cluster.runningNodes)
             if(cluster.status == Running) RequestProcessor.processEvent(event)
             else {
-              LOG.info(s"Not doing $event because cluster is not yet in Running status")
+              LOG.info(s"Not doing $event because cluster is in ${cluster.status} status")
             }
           }
 
