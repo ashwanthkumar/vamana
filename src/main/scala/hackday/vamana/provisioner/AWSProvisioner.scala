@@ -58,7 +58,7 @@ case class AWSProvisioner(computeService: ComputeService) {
 
 trait Provisioner {
   def create(cluster: ClusterSpec) : ClusterContext
-  def upScale(cluster: RunningCluster, factor: Int) : RunningCluster
+  def upScale(cluster: RunningCluster, appContext: AppContext, factor: Int) : RunningCluster
   def downScale(cluster: ClusterSpec, clusterCtx: ClusterContext, scalar: Scalar, factor: Int) : ClusterContext
   def tearDown(cluster: ClusterSpec, clusterCtx: ClusterContext)
   def runScriptOn(cluster: ClusterSpec, clusterCtx: ClusterContext, script: String) : Iterable[ExecResponse]
@@ -165,7 +165,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
   }
 
 
-  override def upScale(cluster: RunningCluster, factor: Int): RunningCluster = {
+  override def upScale(cluster: RunningCluster, appContext: AppContext, factor: Int): RunningCluster = {
     val hwConfig = cluster.spec.hwConfig
     val slaveOptions = templateOptions(cluster.spec.name)(false)
     val provisioner = provisionerFor(cluster.spec)
@@ -176,6 +176,7 @@ object ClusterProvisioner extends Provisioner with VamanaLogger with LoginDetail
         templateFrom(provisioner.computeService)(hwConfig, Some(slaveOptions))).toSet
     LOG.info(s"[UPSCALE] Following new slaves have been added ")
     LOG.info(s"${newSlaves.map(_.getPublicAddresses).mkString("[UPSCALE]","\n", "")}")
+    bootstrap(cluster.spec, cluster.context.get, appContext.lifeCycle.bootstrap())
     cluster.addNodes(newSlaves)
   }
 
