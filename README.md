@@ -1,3 +1,8 @@
+# UPDATE
+This project is deprecated in favour of [vamana2](https://github.com/ashwanthkumar/vamana2). Please refer there for the latest version.
+
+<hr />
+
 [![Build Status](https://snap-ci.com/ashwanthkumar/vamana/branch/master/build_image)](https://snap-ci.com/ashwanthkumar/vamana/branch/master)
 
 # vamana
